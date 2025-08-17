@@ -1,0 +1,21 @@
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans',sans-serif;background:#0b1020;color:#e7ebf3}a{color:inherit}
+.container{max-width:880px;margin:0 auto;padding:24px}
+header{margin-bottom:12px}
+h1{margin:0 0 6px 0;font-size:28px}
+.subtitle{margin:0;color:#aab3c9}
+.card{background:#121a33;border:1px solid #25325e;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+label{display:block;margin:10px 0 6px 0;color:#c7d2f0}
+input[type=text],textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #2a3a70;background:#0f1530;color:#e7ebf3}
+.input-row{display:flex;gap:8px}
+button{padding:10px 14px;border-radius:10px;border:1px solid #3c4c86;background:#2a3a70;color:#fff;cursor:pointer}
+button:hover{filter:brightness(1.1)}
+button.secondary{background:#1e2a54}
+.status{min-height:20px;color:#aab3c9}
+.result.hidden{display:none}
+.result h2{margin:10px 0}
+.verse{background:#0b132b;border:1px dashed #2d3d79;border-radius:10px;padding:10px;margin:8px 0}
+.meaning{margin-top:8px}
+.radio-row{display:flex;gap:16px;margin:8px 0}
+.journal-item{border-top:1px solid #25325e;padding:8px 0}
+.muted{color:#8c97b6;font-size:13px}
+code{background:#0f1530;padding:2px 6px;border-radius:6px}
