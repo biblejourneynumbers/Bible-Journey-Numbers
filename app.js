@@ -14,6 +14,9 @@ const extendedOut = document.getElementById('extendedOut');
 const alignOut    = document.getElementById('alignOut');
 const prayerOut   = document.getElementById('prayerOut');
 const translationSelect = document.getElementById('translation'); // <select id="translation">
+const backfillBtn = document.getElementById('backfillBtn');
+backfillBtn?.addEventListener('click', backfillJournal);
+
 
 // Bump this when you deploy to force browsers to fetch fresh files
 const ASSET_VER = 'build-1';
@@ -212,8 +215,35 @@ function toCsvValue(s) {
 }
 
 function exportCSV() {
+  async function backfillJournal() {
+  statusEl.textContent = 'Backfilling…';
   const raw = localStorage.getItem('bj_journal') || '[]';
-  const rows = JSON.parse(raw);
+  const list = JSON.parse(raw);
+
+  let changed = 0;
+  for (let i = 0; i < list.length; i++) {
+    const r = list[i];
+    // Skip if verse already present
+    if (r.verse && r.verse.trim()) continue;
+
+    // Re-resolve using current translation selection
+    const { ref, text } = await getVerseForNumber(r.number);
+    if (text) {
+      r.verse = text;
+      // Keep original reference if present, else use current ref
+      if (!r.reference && ref) r.reference = ref;
+      // Save current translation label too, if not stored
+      if (!r.translation) r.translation = (translationSelect?.value || '').toUpperCase();
+      changed++;
+    }
+  }
+
+  localStorage.setItem('bj_journal', JSON.stringify(list));
+  renderJournal(list);
+  statusEl.textContent = changed
+    ? `Backfilled ${changed} entr${changed === 1 ? 'y' : 'ies'}.`
+    : 'Nothing to backfill.';
+}
 
   // Headers for Excel/Sheets
   const headers = ['Date', 'Number', 'Reference', 'Verse', 'Themes', 'Reflection', 'Source'];
