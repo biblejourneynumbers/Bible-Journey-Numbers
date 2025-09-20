@@ -23,11 +23,12 @@ let translationCache = {};
 
 // Map dropdown value -> CSV filename (exactly as in your repo)
 function csvUrlForTranslation(code) {
+  const v = '?v=' + ASSET_VER;
   switch ((code || '').toLowerCase()) {
-    case 'asv': return 'FullNumbers_WithVerses_ASV Time Complete.csv?v=' + ASSET_VER;
-    case 'fbv': return 'FullNumbers_WithVerses_FBV Time Complete.csv?v=' + ASSET_VER;
-    case 'kjv': return 'Bible_Journey JKV Time complete.csv?v=' + ASSET_VER;
-    default:    return 'FullNumbers_WithVerses_ASV Time Complete.csv?v=' + ASSET_VER;
+    case 'asv': return encodeURI('FullNumbers_WithVerses_ASV Time Complete.csv' + v);
+    case 'fbv': return encodeURI('FullNumbers_WithVerses_FBV Time Complete.csv' + v);
+    case 'kjv': return encodeURI('Bible_Journey JKV Time complete.csv' + v);
+    default:    return encodeURI('FullNumbers_WithVerses_ASV Time Complete.csv' + v);
   }
 }
 
@@ -104,7 +105,6 @@ async function getVerseForNumber(number) {
   };
 }
 
-
 // ===== Main resolve flow =====
 async function resolveNumber() {
   const n = numInput.value.trim();
@@ -115,26 +115,31 @@ async function resolveNumber() {
 
   statusEl.textContent = 'Loading verse…';
   resultEl.classList.remove('hidden');
-  refOut.textContent = '';
-  verseText.textContent = '…';
+  refOut.textContent      = '';
+  verseText.textContent   = '…';
+  themesOut.textContent   = '';
+  quickOut.textContent    = '';
+  extendedOut.textContent = '';
+  alignOut.textContent    = '';
+  prayerOut.textContent   = '';
 
-try {
-  const { ref, text, themes, quick, extended, align, prayer } = await getVerseForNumber(n);
+  try {
+    const { ref, text, themes, quick, extended, align, prayer } = await getVerseForNumber(n);
 
-  refOut.textContent      = ref;
-  verseText.textContent   = text;
-  themesOut.textContent   = themes;
-  quickOut.textContent    = quick;
-  extendedOut.textContent = extended;
-  alignOut.textContent    = align;
-  prayerOut.textContent   = prayer;
+    refOut.textContent      = ref;
+    verseText.textContent   = text;
+    themesOut.textContent   = themes;
+    quickOut.textContent    = quick;
+    extendedOut.textContent = extended;
+    alignOut.textContent    = align;
+    prayerOut.textContent   = prayer;
 
-  statusEl.textContent = text ? '' : 'No verse text found.';
-} catch (e) {
-  console.error(e);
-  statusEl.textContent = 'Error loading verse. Check file names and headers.';
-  verseText.textContent = '';
-}
+    statusEl.textContent = text ? '' : 'No verse text found.';
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = 'Error loading verse. Check file names and headers.';
+    verseText.textContent = '';
+  }
 }
 
 /* =========================
@@ -213,7 +218,3 @@ translationSelect?.addEventListener('change', () => {
 
 // Init journal only (no journey_map anymore)
 loadJournal();
-
-
-
-
