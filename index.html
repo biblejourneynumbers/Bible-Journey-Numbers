@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bible Journey — Number → Scripture</title>
+  <title>Bible Journey → Scripture</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -15,41 +15,38 @@
 
     <section class="card">
       <label for="numInput">Enter number</label>
+
       <div class="input-row">
         <input id="numInput" type="text" inputmode="numeric" placeholder="e.g., 247">
         <button id="resolveBtn">Resolve</button>
       </div>
+
+      <!-- Translation selector -->
+      <div class="input-row" style="margin-top:.5rem;">
+        <label for="translation" class="inline-label" style="margin-right:.5rem;">Translation:</label>
+        <select id="translation">
+          <option value="asv">ASV</option>
+          <option value="fbv">FBV</option>
+          <option value="kjv">KJV</option>
+        </select>
+      </div>
+
       <p id="status" class="status"></p>
+
       <div id="result" class="result hidden">
         <h2 id="refOut"></h2>
         <div class="verse">
           <strong>Verse (text):</strong>
-          <p id="verseText">KJV/CSB text will be added soon. For now we show the reference so you can verify in your Bible.</p>
+          <p id="verseText">ASV/FBV/KJV will be added soon. For now we show the reference so you can verify in your Bible.</p>
         </div>
         <div class="meaning">
-          <label for="themes">Themes (comma‑separated)</label>
-          <input id="themes" type="text" placeholder="Prayer, Watchfulness">
-          <label for="reflection">Reflection</label>
-          <textarea id="reflection" rows="4" placeholder="Short reflection grounded in the verse…"></textarea>
-          <div class="radio-row">
-            <label><input type="radio" name="sourceType" value="Manual" checked> Manual</label>
-            <label><input type="radio" name="sourceType" value="Watch"> Watch</label>
-          </div>
-          <button id="saveBtn" class="secondary">Add to Journal</button>
+          <strong>Meaning (short):</strong>
+          <p id="meaningText"></p>
         </div>
       </div>
     </section>
-
-    <section class="card">
-      <h2>Journal (saved on this device)</h2>
-      <div id="journalList" class="journal"></div>
-      <button id="exportBtn" class="secondary">Export JSON</button>
-    </section>
-
-    <footer>
-      <p class="muted">Mapping source: <code>journey_map.csv</code>. Verse text source coming soon (KJV first, CSB later by license).</p>
-    </footer>
   </main>
+
   <script src="app.js"></script>
 </body>
 </html>
