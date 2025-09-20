@@ -214,29 +214,131 @@ function toCsvValue(s) {
   return /[",\n]/.test(t) ? `"${t}"` : t;
 }
 
+// ---- CSV export (Windows-friendly with BOM) ----
+function toCsvValue(s) {
+  if (s == null) return '';
+  const t = String(s).replace(/"/g, '""');
+  return /[",\n]/.test(t) ? `"${t}"` : t;
+}
+
 function exportCSV() {
-  async function backfillJournal() {
+  const raw  = localStorage.getItem('bj_journal') || '[]';
+  const rows = JSON.parse(raw);
+
+  const headers = ['Date', 'Number', 'Reference', 'Verse', 'Themes', 'Reflection', 'Source', 'Translation'];
+  const lines = [headers.join(',')];
+
+  for (const r of rows) {
+    const local = new Date(r.date).toLocaleString();
+    lines.push([
+      toCsvValue(local),
+      toCsvValue(r.number),
+      toCsvValue(r.reference),
+      toCsvValue(r.verse || ''),
+      toCsvValue(r.themes || ''),
+      toCsvValue(r.reflection || ''),
+      toCsvValue(r.sourceType || ''),
+      toCsvValue(r.translation || '')
+    ].join(','));
+  }
+
+  const csv = '\uFEFF' + lines.join('\r\n'); // BOM for Excel
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bible_journey_journal.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---- Backfill missing fields in existing entries ----
+async function backfillJournal() {
   statusEl.textContent = 'Backfilling…';
-  const raw = localStorage.getItem('bj_journal') || '[]';
+  const raw  = localStorage.getItem('bj_journal') || '[]';
   const list = JSON.parse(raw);
 
   let changed = 0;
   for (let i = 0; i < list.length; i++) {
     const r = list[i];
-    // Skip if verse already present
+
+    // If verse already present, skip
+    if (r.verse && r.verse.trim(
+// ---- CSV export (Windows-friendly with BOM) ----
+function toCsvValue(s) {
+  if (s == null) return '';
+  const t = String(s).replace(/"/g, '""');
+  return /[",\n]/.test(t) ? `"${t}"` : t;
+}
+
+function exportCSV() {
+  const raw  = localStorage.getItem('bj_journal') || '[]';
+  const rows = JSON.parse(raw);
+
+  const headers = ['Date', 'Number', 'Reference', 'Verse', 'Themes', 'Reflection', 'Source', 'Translation'];
+  const lines = [headers.join(',')];
+
+  for (const r of rows) {
+    const local = new Date(r.date).toLocaleString();
+    lines.push([
+      toCsvValue(local),
+      toCsvValue(r.number),
+      toCsvValue(r.reference),
+      toCsvValue(r.verse || ''),
+      toCsvValue(r.themes || ''),
+      toCsvValue(r.reflection || ''),
+      toCsvValue(r.sourceType || ''),
+      toCsvValue(r.translation || '')
+    ].join(','));
+  }
+
+  const csv = '\uFEFF' + lines.join('\r\n'); // BOM for Excel
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bible_journey_journal.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---- Backfill missing fields in existing entries ----
+async function backfillJournal() {
+  statusEl.textContent = 'Backfilling…';
+  const raw  = localStorage.getItem('bj_journal') || '[]';
+  const list = JSON.parse(raw);
+
+  let changed = 0;
+  for (let i = 0; i < list.length; i++) {
+    const r = list[i];
+
+    // If verse already present, skip
     if (r.verse && r.verse.trim()) continue;
 
     // Re-resolve using current translation selection
     const { ref, text } = await getVerseForNumber(r.number);
     if (text) {
       r.verse = text;
-      // Keep original reference if present, else use current ref
       if (!r.reference && ref) r.reference = ref;
-      // Save current translation label too, if not stored
       if (!r.translation) r.translation = (translationSelect?.value || '').toUpperCase();
       changed++;
     }
   }
+
+  localStorage.setItem('bj_journal', JSON.stringify(list));
+  renderJournal(list);
+  statusEl.textContent = changed
+    ? `Backfilled ${changed} entr${changed === 1 ? 'y' : 'ies'}.`
+    : 'Nothing to backfill.';
+}
+
+// ---- (Optional) Clear all entries ----
+function clearJournal() {
+  if (!confirm('This will permanently delete all saved journal entries on this device. Continue?')) return;
+  localStorage.removeItem('bj_journal');
+  renderJournal([]);
+  statusEl.textContent = 'Journal cleared on this device.';
+}
 
   localStorage.setItem('bj_journal', JSON.stringify(list));
   renderJournal(list);
