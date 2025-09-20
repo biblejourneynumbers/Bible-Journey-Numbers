@@ -79,37 +79,39 @@
         </div>
       </div>
     </section>
+<section class="card" style="margin-top:1rem;">
+  <h2>📝 Journal</h2>
+  <p class="muted">
+    Use this section to add your <strong>personal notes</strong> about each number.<br>
+    These entries are saved only on this device, but you can export them to JSON or CSV for review later.
+  </p>
 
-    <!-- Journal Card -->
-    <section class="card" style="margin-top:1rem;">
-      <h2>📝 Journal</h2>
-      <p class="muted">Save your reflections locally on this device.</p>
+  <div class="input-row">
+    <label for="themes">My Themes:</label>
+    <input id="themes" type="text" placeholder="e.g., Faith, Obedience">
+  </div>
 
-      <div class="input-row">
-        <label for="themes">Themes:</label>
-        <input id="themes" type="text" placeholder="e.g., Faith, Obedience">
-      </div>
+  <div class="input-row">
+    <label for="reflection">My Reflection:</label>
+    <textarea id="reflection" rows="3" placeholder="Your personal reflection here..."></textarea>
+  </div>
 
-      <div class="input-row">
-        <label for="reflection">Reflection:</label>
-        <textarea id="reflection" rows="3" placeholder="Your reflection here..."></textarea>
-      </div>
+  <div class="radio-row">
+    <label>Source:</label>
+    <label><input type="radio" name="sourceType" value="Manual" checked> Manual</label>
+    <label><input type="radio" name="sourceType" value="Watch"> Watch</label>
+  </div>
 
-      <div class="radio-row">
-        <label>Source:</label>
-        <label><input type="radio" name="sourceType" value="Manual" checked> Manual</label>
-        <label><input type="radio" name="sourceType" value="Watch"> Watch</label>
-      </div>
+  <div class="input-row">
+    <button id="saveBtn">Save Entry</button>
+    <button id="exportBtn" class="secondary">Export JSON</button>
+    <button id="exportCsvBtn" class="secondary">Export CSV</button>
+    <button id="clearBtn" class="secondary">Clear Journal</button>
+  </div>
 
-      <div class="input-row">
-        <button id="saveBtn">Save Entry</button>
-        <button id="exportBtn" class="secondary">Export JSON</button>
-        <button id="exportCsvBtn" class="secondary">Export CSV</button>
-        <button id="clearBtn" class="secondary">Clear Journal</button>
-      </div>
+  <div id="journalList" class="journal-list"></div>
+</section>
 
-      <div id="journalList" class="journal-list"></div>
-    </section>
   </main>
 
   <!-- Load app.js with version to avoid cache -->
