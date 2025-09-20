@@ -15,13 +15,13 @@ const alignOut    = document.getElementById('alignOut');
 const prayerOut   = document.getElementById('prayerOut');
 const translationSelect = document.getElementById('translation'); // <select id="translation">
 
-// Bump this when you deploy to force browsers to fetch fresh files
-const ASSET_VER = 'build-1';
+// ===== Cache-busting =====
+const ASSET_VER = 'build-2'; // bump this AND index.html <script src="app.js?v=build-2">
 
-// Cache for CSV rows: { asv: [...], fbv: [...], kjv: [...] }
-let translationCache = {};
+// ===== CSV cache =====
+let translationCache = {}; // { asv: rows[], fbv: rows[], kjv: rows[] }
 
-// Map dropdown value -> CSV filename (exactly as in your repo)
+// ===== Helpers =====
 function csvUrlForTranslation(code) {
   const v = '?v=' + ASSET_VER;
   switch ((code || '').toLowerCase()) {
@@ -52,14 +52,13 @@ function splitCSV(line) {
   return out;
 }
 
-// Load CSV → array of row objects (headers are lowercased)
+// Load CSV → array of row objects (headers lowercased)
 async function loadCsv(url) {
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed to fetch ${url}`);
   const text = await res.text();
   const lines = text.split(/\r?\n/).filter(Boolean);
   if (!lines.length) return [];
-
   const headers = splitCSV(lines.shift()).map(h => h.trim().toLowerCase());
   return lines.map(line => {
     const cells = splitCSV(line);
@@ -69,21 +68,38 @@ async function loadCsv(url) {
   });
 }
 
-// Lookup by Number directly from selected translation CSV
+// Normalize number values so "001", "1 ", "1" all match
+function normalizeNumber(val) {
+  const s = String(val ?? '').trim();
+  if (s === '') return '';
+  const digitsOnly = s.replace(/[^\d]/g, '');
+  if (digitsOnly === '') return '';
+  return String(parseInt(digitsOnly, 10)); // "001" -> "1"
+}
+
+// ===== Core lookup =====
+async function ensureCsvLoaded(code) {
+  const k = (code || 'kjv').toLowerCase();
+  if (!translationCache[k]) {
+    statusEl.textContent = 'Loading translation data…';
+    translationCache[k] = await loadCsv(csvUrlForTranslation(k));
+    statusEl.textContent = `Loaded ${translationCache[k].length} rows for ${k.toUpperCase()}.`;
+  }
+  return translationCache[k];
+}
+
 async function getVerseForNumber(number) {
   const code = (translationSelect?.value || 'kjv').toLowerCase();
+  const rows = await ensureCsvLoaded(code);
 
-  if (!translationCache[code]) {
-    translationCache[code] = await loadCsv(csvUrlForTranslation(code));
-  }
-  const rows = translationCache[code];
+  const target = normalizeNumber(number);
 
   // headers are lowercased by loadCsv()
-  const hit = rows.find(r => String(r['number']) === String(number));
+  const hit = rows.find(r => normalizeNumber(r['number']) === target);
   if (!hit) {
     return {
       ref: 'Not found',
-      text: 'No verse text found for this number.',
+      text: 'No verse text found for this number in the selected translation.',
       themes: '', quick: '', extended: '', align: '', prayer: ''
     };
   }
@@ -107,13 +123,14 @@ async function getVerseForNumber(number) {
 
 // ===== Main resolve flow =====
 async function resolveNumber() {
-  const n = numInput.value.trim();
+  const nRaw = numInput.value;
+  const n = normalizeNumber(nRaw);
   if (!n) {
-    statusEl.textContent = 'Enter a number.';
+    statusEl.textContent = 'Enter a number (digits only).';
     return;
   }
 
-  statusEl.textContent = 'Loading verse…';
+  statusEl.textContent = 'Resolving…';
   resultEl.classList.remove('hidden');
   refOut.textContent      = '';
   verseText.textContent   = '…';
@@ -169,9 +186,10 @@ function renderJournal(list) {
 }
 
 function saveEntry() {
-  const n     = numInput.value.trim();
-  const ref   = refOut.textContent || '';
-  const verse = verseText.textContent || '';
+  const nRaw = numInput.value;
+  const n    = normalizeNumber(nRaw);
+  const ref  = refOut.textContent || '';
+  const verse= verseText.textContent || '';
   if (!n || !ref) return;
 
   const themes     = document.getElementById('themes')?.value.trim() || '';
@@ -257,10 +275,8 @@ async function backfillJournal() {
   for (let i = 0; i < list.length; i++) {
     const r = list[i];
 
-    // If verse already present, skip
     if (r.verse && r.verse.trim()) continue;
 
-    // Re-resolve using current translation selection
     const { ref, text } = await getVerseForNumber(r.number);
     if (text) {
       r.verse = text;
@@ -301,8 +317,12 @@ backfillBtn?.addEventListener('click', backfillJournal);
 const clearBtn = document.getElementById('clearBtn');
 clearBtn?.addEventListener('click', clearJournal);
 
-// Auto-refresh result when translation changes
-translationSelect?.addEventListener('change', () => {
+// Preload current translation on page load + when changed
+(async () => { try { await ensureCsvLoaded(translationSelect?.value); } catch(e){ console.error(e); } })();
+translationSelect?.addEventListener('change', async () => {
+  // reset cached status and preload the new translation
+  statusEl.textContent = '';
+  try { await ensureCsvLoaded(translationSelect.value); } catch(e){ console.error(e); }
   if (!resultEl.classList.contains('hidden')) resolveNumber();
 });
 
