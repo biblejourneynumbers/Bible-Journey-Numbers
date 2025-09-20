@@ -3,7 +3,7 @@
 This is a super-simple version of **Bible Journey** you can host **right now** on **GitHub Pages** (no Vercel needed yet).
 
 ## What it does
-- Lets you type a **number** (e.g., `247`) and shows the **Scripture reference** from `journey_map.csv`.
+- Lets you type a **number** (e.g., `507`) and shows the **Scripture reference** from `journey_map.csv`.
 - Lets you add **Themes/Reflection** and save a **Journal** locally (in your browser).
 - Exports your journal as a `.json` file.
 - Verse text is a **placeholder** for now (we'll add KJV/CSB later).
