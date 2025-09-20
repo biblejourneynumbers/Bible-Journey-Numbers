@@ -205,6 +205,42 @@ function exportJSON() {
   a.click();
   URL.revokeObjectURL(url);
 }
+function toCsvValue(s) {
+  if (s == null) return '';
+  const t = String(s).replace(/"/g, '""');
+  return /[",\n]/.test(t) ? `"${t}"` : t;
+}
+
+function exportCSV() {
+  const raw = localStorage.getItem('bj_journal') || '[]';
+  const rows = JSON.parse(raw);
+
+  // Headers for Excel/Sheets
+  const headers = ['Date', 'Number', 'Reference', 'Verse', 'Themes', 'Reflection', 'Source'];
+  const lines = [headers.join(',')];
+
+  for (const r of rows) {
+    const local = new Date(r.date).toLocaleString(); // friendlier than ISO
+    lines.push([
+      toCsvValue(local),
+      toCsvValue(r.number),
+      toCsvValue(r.reference),
+      toCsvValue(r.verse || ''),        // we added this in saveEntry()
+      toCsvValue(r.themes || ''),
+      toCsvValue(r.reflection || ''),
+      toCsvValue(r.sourceType || '')
+    ].join(','));
+  }
+
+  const csv = lines.join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bible_journey_journal.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 /* =========================
  *  Events & init
@@ -212,6 +248,9 @@ function exportJSON() {
 resolveBtn?.addEventListener('click', resolveNumber);
 saveBtn?.addEventListener('click', saveEntry);
 exportBtn?.addEventListener('click', exportJSON);
+const exportCsvBtn = document.getElementById('exportCsvBtn');
+exportCsvBtn?.addEventListener('click', exportCSV);
+
 
 // Auto-refresh result when translation changes
 translationSelect?.addEventListener('change', () => {
