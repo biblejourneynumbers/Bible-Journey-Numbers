@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bible Journey → Scripture</title>
 
-  <!-- load CSS with version to bust cache -->
+  <!-- Load CSS with version to bust cache -->
   <link rel="stylesheet" href="styles.css?v=build-1">
 
-  <!-- prevent stale cache -->
+  <!-- Prevent stale cache -->
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <!-- nice address bar color on mobile -->
+  <!-- Nice address bar color on mobile -->
   <meta name="theme-color" content="#0b1020">
 </head>
 <body>
@@ -25,6 +25,7 @@
       </p>
     </header>
 
+    <!-- Lookup Card -->
     <section class="card">
       <label for="numInput">Enter number</label>
 
@@ -45,7 +46,7 @@
 
       <p id="status" class="status"></p>
 
-      <!-- Your result block -->
+      <!-- Result -->
       <div id="result" class="result hidden">
         <h2 id="refOut"></h2>
 
@@ -81,7 +82,7 @@
       </div>
     </section>
 
-    <!-- Journal section -->
+    <!-- Journal Card -->
     <section class="card" style="margin-top:1rem;">
       <h2>📝 Journal</h2>
       <p class="muted">Save your reflections locally on this device.</p>
@@ -103,16 +104,16 @@
       </div>
 
       <div class="input-row">
-  <button id="saveBtn">Save Entry</button>
-  <button id="exportBtn" class="secondary">Export JSON</button>
-  <button id="exportCsvBtn" class="secondary">Export CSV</button>
-</div>
+        <button id="saveBtn">Save Entry</button>
+        <button id="exportBtn" class="secondary">Export JSON</button>
+        <button id="exportCsvBtn" class="secondary">Export CSV</button>
+      </div>
 
       <div id="journalList" class="journal-list"></div>
     </section>
   </main>
 
-  <!-- include app.js with version to avoid cache -->
+  <!-- Load app.js with version to avoid cache -->
   <script src="app.js?v=build-1"></script>
 </body>
 </html>
