@@ -13,26 +13,58 @@ const quickOut    = document.getElementById('quickOut');
 const extendedOut = document.getElementById('extendedOut');
 const alignOut    = document.getElementById('alignOut');
 const prayerOut   = document.getElementById('prayerOut');
-const translationSelect = document.getElementById('translation'); // <select id="translation">
+const translationSelect = document.getElementById('translation');
+
+saveBtn.disabled = true; // only enable after a successful resolve
 
 // ===== Cache-busting =====
-const ASSET_VER = 'build-2'; // bump this AND index.html <script src="app.js?v=build-2">
+const ASSET_VER = 'build-4';
 
 // ===== CSV cache =====
-let translationCache = {}; // { asv: rows[], fbv: rows[], kjv: rows[] }
+let translationCache = {}; // { asv: rows[], web: rows[], kjv: rows[] }
 
-// ===== Helpers =====
-function csvUrlForTranslation(code) {
-  const v = '?v=' + ASSET_VER;
-  switch ((code || '').toLowerCase()) {
-    case 'asv': return encodeURI('FullNumbers_WithVerses_ASV Time Complete.csv' + v);
-    case 'fbv': return encodeURI('FullNumbers_WithVerses_FBV Time Complete.csv' + v);
-    case 'kjv': return encodeURI('Bible_Journey JKV Time complete.csv' + v);
-    default:    return encodeURI('FullNumbers_WithVerses_ASV Time Complete.csv' + v);
-  }
+// ----- Helper: normalize numbers so "001", "1 ", "1" all match
+function normalizeNumber(val) {
+  const s = String(val ?? '').trim();
+  if (s === '') return '';
+  const digitsOnly = s.replace(/[^\d]/g, '');
+  if (digitsOnly === '') return '';
+  return String(parseInt(digitsOnly, 10));
 }
 
-// Split a CSV line while respecting quotes
+// ----- Helper: candidate filenames (supports multiple names so you don’t have to)
+function candidateFilesForTranslation(code) {
+  const c = (code || '').toLowerCase();
+  if (c === 'asv') {
+    return ['FullNumbers_WithVerses_ASV Time Complete.csv', 'ASV.csv'];
+  }
+  if (c === 'web') {
+    return ['FullNumbers_WithVerses_WEB.csv', 'WEB.csv'];
+  }
+  // KJV — support both spellings from earlier
+  return ['Bible_Journey JKV Time complete.csv', 'Bible_Journey KJV Time Complete.csv', 'KJV.csv'];
+}
+
+async function fetchFirstAvailable(candidates) {
+  let lastErr;
+  for (const name of candidates) {
+    const url = encodeURI(name + '?v=' + ASSET_VER);
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      if (text && text.trim().length) {
+        return text;
+      }
+    } catch (e) {
+      lastErr = e;
+      // try next
+    }
+  }
+  throw lastErr || new Error('No CSV found');
+}
+
+// ----- CSV parsing (comma-delimited with quotes)
 function splitCSV(line) {
   const out = [];
   let cur = '';
@@ -52,11 +84,7 @@ function splitCSV(line) {
   return out;
 }
 
-// Load CSV → array of row objects (headers lowercased)
-async function loadCsv(url) {
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`Failed to fetch ${url}`);
-  const text = await res.text();
+function parseCsvText(text) {
   const lines = text.split(/\r?\n/).filter(Boolean);
   if (!lines.length) return [];
   const headers = splitCSV(lines.shift()).map(h => h.trim().toLowerCase());
@@ -68,33 +96,24 @@ async function loadCsv(url) {
   });
 }
 
-// Normalize number values so "001", "1 ", "1" all match
-function normalizeNumber(val) {
-  const s = String(val ?? '').trim();
-  if (s === '') return '';
-  const digitsOnly = s.replace(/[^\d]/g, '');
-  if (digitsOnly === '') return '';
-  return String(parseInt(digitsOnly, 10)); // "001" -> "1"
-}
-
-// ===== Core lookup =====
+// ----- Load CSV for a translation
 async function ensureCsvLoaded(code) {
   const k = (code || 'kjv').toLowerCase();
   if (!translationCache[k]) {
     statusEl.textContent = 'Loading translation data…';
-    translationCache[k] = await loadCsv(csvUrlForTranslation(k));
+    const txt = await fetchFirstAvailable(candidateFilesForTranslation(k));
+    translationCache[k] = parseCsvText(txt);
     statusEl.textContent = `Loaded ${translationCache[k].length} rows for ${k.toUpperCase()}.`;
   }
   return translationCache[k];
 }
 
+// ----- Core lookup
 async function getVerseForNumber(number) {
   const code = (translationSelect?.value || 'kjv').toLowerCase();
   const rows = await ensureCsvLoaded(code);
 
   const target = normalizeNumber(number);
-
-  // headers are lowercased by loadCsv()
   const hit = rows.find(r => normalizeNumber(r['number']) === target);
   if (!hit) {
     return {
@@ -104,11 +123,14 @@ async function getVerseForNumber(number) {
     };
   }
 
+  // Reference + Verse Text (checks translation-specific column first)
   const ref = hit['reference'] || '';
   const text =
+    hit['verse_text (web)'] ||
     hit['verse_text (kjv)'] ||
     hit['verse_text (asv)'] ||
-    hit['verse_text (fbv)'] || '';
+    hit['verse_text (fbv)'] || // harmless if missing
+    '';
 
   return {
     ref,
@@ -151,11 +173,14 @@ async function resolveNumber() {
     alignOut.textContent    = align;
     prayerOut.textContent   = prayer;
 
-    statusEl.textContent = text ? '' : 'No verse text found.';
+    const ok = Boolean(text && text.trim());
+    statusEl.textContent = ok ? '' : 'No verse text found.';
+    saveBtn.disabled = !ok;
   } catch (e) {
     console.error(e);
     statusEl.textContent = 'Error loading verse. Check file names and headers.';
     verseText.textContent = '';
+    saveBtn.disabled = true;
   }
 }
 
@@ -195,7 +220,6 @@ function renderJournal(list) {
   }
 }
 
-
 async function saveEntry() {
   const nRaw = numInput.value;
   const n    = normalizeNumber(nRaw);
@@ -207,7 +231,7 @@ async function saveEntry() {
     return;
   }
 
-  // Ensure reference/verse + get CSV fields (themes/quick/extended/alignment/prayer)
+  // Ensure we have verse/reference and CSV fields
   let resolved;
   try {
     resolved = await getVerseForNumber(n);
@@ -223,7 +247,7 @@ async function saveEntry() {
     return;
   }
 
-  // Your own inputs
+  // User inputs
   const myThemes     = document.getElementById('themes')?.value.trim() || '';
   const myReflection = document.getElementById('reflection')?.value.trim() || '';
   const src = [...document.querySelectorAll('input[name="sourceType"]')]
@@ -238,7 +262,7 @@ async function saveEntry() {
     reference: ref,
     verse,
 
-    // CSV-sourced fields (read-only from your data files)
+    // CSV-sourced fields
     csvThemes:   resolved?.themes   || '',
     csvQuick:    resolved?.quick    || '',
     csvExtended: resolved?.extended || '',
@@ -256,7 +280,6 @@ async function saveEntry() {
   renderJournal(list);
   statusEl.textContent = 'Saved to Journal (local on this device).';
 }
-
 
 // ---- JSON export ----
 function exportJSON() {
@@ -300,8 +323,8 @@ function exportCSV() {
       toCsvValue(r.csvExtended || ''),
       toCsvValue(r.csvAlign || ''),
       toCsvValue(r.csvPrayer || ''),
-      toCsvValue(r.themes || ''),        // your own input
-      toCsvValue(r.reflection || ''),    // your own input
+      toCsvValue(r.themes || ''),
+      toCsvValue(r.reflection || ''),
       toCsvValue(r.sourceType || ''),
       toCsvValue(r.translation || '')
     ].join(','));
@@ -315,35 +338,6 @@ function exportCSV() {
   a.download = 'bible_journey_journal.csv';
   a.click();
   URL.revokeObjectURL(url);
-}
-
-
-// ---- Backfill missing fields in existing entries ----
-async function backfillJournal() {
-  statusEl.textContent = 'Backfilling…';
-  const raw  = localStorage.getItem('bj_journal') || '[]';
-  const list = JSON.parse(raw);
-
-  let changed = 0;
-  for (let i = 0; i < list.length; i++) {
-    const r = list[i];
-
-    if (r.verse && r.verse.trim()) continue;
-
-    const { ref, text } = await getVerseForNumber(r.number);
-    if (text) {
-      r.verse = text;
-      if (!r.reference && ref) r.reference = ref;
-      if (!r.translation) r.translation = (translationSelect?.value || '').toUpperCase();
-      changed++;
-    }
-  }
-
-  localStorage.setItem('bj_journal', JSON.stringify(list));
-  renderJournal(list);
-  statusEl.textContent = changed
-    ? `Backfilled ${changed} entr${changed === 1 ? 'y' : 'ies'}.`
-    : 'Nothing to backfill.';
 }
 
 // ---- Clear all entries ----
@@ -364,16 +358,12 @@ exportBtn?.addEventListener('click', exportJSON);
 const exportCsvBtn = document.getElementById('exportCsvBtn');
 exportCsvBtn?.addEventListener('click', exportCSV);
 
-const backfillBtn = document.getElementById('backfillBtn');
-backfillBtn?.addEventListener('click', backfillJournal);
-
 const clearBtn = document.getElementById('clearBtn');
 clearBtn?.addEventListener('click', clearJournal);
 
 // Preload current translation on page load + when changed
 (async () => { try { await ensureCsvLoaded(translationSelect?.value); } catch(e){ console.error(e); } })();
 translationSelect?.addEventListener('change', async () => {
-  // reset cached status and preload the new translation
   statusEl.textContent = '';
   try { await ensureCsvLoaded(translationSelect.value); } catch(e){ console.error(e); }
   if (!resultEl.classList.contains('hidden')) resolveNumber();
