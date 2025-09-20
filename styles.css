@@ -87,7 +87,7 @@ button.secondary { background: #1e2a54; }
   padding: 10px;
   margin: 8px 0;
 }
-.meaning { margin-top: 8px; }
+.meaning p { margin: 6px 0 0; line-height: 1.5; }
 
 /* Radio rows */
 .radio-row {
