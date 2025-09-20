@@ -6,23 +6,21 @@
   <title>Bible Journey → Scripture</title>
 
   <!-- Load CSS with version to bust cache -->
-  <link rel="stylesheet" href="styles.css?v=build-1">
+  <link rel="stylesheet" href="styles.css?v=build-2">
 
   <!-- Prevent stale cache -->
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <!-- Nice address bar color on mobile -->
+  <!-- Mobile address bar color -->
   <meta name="theme-color" content="#0b1020">
 </head>
 <body>
   <main class="container">
     <header>
       <h1>📖 Bible Journey</h1>
-      <p class="subtitle">
-        Type a number → choose a translation → see the Scripture reference and verse.
-      </p>
+      <p class="subtitle">Type a number → choose a translation → see the Scripture reference and verse.</p>
     </header>
 
     <!-- Lookup Card -->
@@ -103,13 +101,12 @@
         <label><input type="radio" name="sourceType" value="Watch"> Watch</label>
       </div>
 
-    <div class="input-row">
-  <button id="saveBtn">Save Entry</button>
-  <button id="exportBtn" class="secondary">Export JSON</button>
-  <button id="exportCsvBtn" class="secondary">Export CSV</button>
-  <button id="backfillBtn" class="secondary">Backfill Missing Fields</button>
-  <button id="clearBtn" class="secondary">Clear Journal</button>
-</div>
+      <div class="input-row">
+        <button id="saveBtn">Save Entry</button>
+        <button id="exportBtn" class="secondary">Export JSON</button>
+        <button id="exportCsvBtn" class="secondary">Export CSV</button>
+        <button id="clearBtn" class="secondary">Clear Journal</button>
+      </div>
 
       <div id="journalList" class="journal-list"></div>
     </section>
@@ -119,3 +116,4 @@
   <script src="app.js?v=build-2"></script>
 </body>
 </html>
+
