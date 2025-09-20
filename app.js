@@ -77,20 +77,33 @@ async function getVerseForNumber(number) {
   }
   const rows = translationCache[code];
 
-  // Our loader lowercases headers, so we look them up lowercased:
-  // "number", "reference", and "verse_text (kjv/asv/fbv)"
+  // headers are lowercased by loadCsv()
   const hit = rows.find(r => String(r['number']) === String(number));
-  if (!hit) return { ref: 'Not found', text: 'No verse text found for this number.' };
+  if (!hit) {
+    return {
+      ref: 'Not found',
+      text: 'No verse text found for this number.',
+      themes: '', quick: '', extended: '', align: '', prayer: ''
+    };
+  }
 
   const ref = hit['reference'] || '';
   const text =
     hit['verse_text (kjv)'] ||
     hit['verse_text (asv)'] ||
-    hit['verse_text (fbv)'] ||
-    '';
+    hit['verse_text (fbv)'] || '';
 
-  return { ref, text };
+  return {
+    ref,
+    text,
+    themes:   hit['themes'] || '',
+    quick:    hit['quick reflection'] || '',
+    extended: hit['extended reflection'] || '',
+    align:    hit['alignment'] || '',
+    prayer:   hit['prayer'] || ''
+  };
 }
+
 
 // ===== Main resolve flow =====
 async function resolveNumber() {
@@ -105,16 +118,23 @@ async function resolveNumber() {
   refOut.textContent = '';
   verseText.textContent = '…';
 
-  try {
-    const { ref, text } = await getVerseForNumber(n);
-    refOut.textContent = ref;
-    verseText.textContent = text;
-    statusEl.textContent = text ? '' : 'No verse text found.';
-  } catch (e) {
-    console.error(e);
-    statusEl.textContent = 'Error loading verse. Check file names and headers.';
-    verseText.textContent = '';
-  }
+try {
+  const { ref, text, themes, quick, extended, align, prayer } = await getVerseForNumber(n);
+
+  refOut.textContent      = ref;
+  verseText.textContent   = text;
+  themesOut.textContent   = themes;
+  quickOut.textContent    = quick;
+  extendedOut.textContent = extended;
+  alignOut.textContent    = align;
+  prayerOut.textContent   = prayer;
+
+  statusEl.textContent = text ? '' : 'No verse text found.';
+} catch (e) {
+  console.error(e);
+  statusEl.textContent = 'Error loading verse. Check file names and headers.';
+  verseText.textContent = '';
+}
 }
 
 /* =========================
