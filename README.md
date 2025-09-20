@@ -1,27 +1,46 @@
-📖 Bible Journey — GitHub Pages Version
-Bible Journey is a lightweight web app you can host on GitHub Pages to connect numbers (often times you notice God highlighting) to Scripture references and verses. It includes journaling so you can reflect and save personal notes — all directly in your browser.
-🌟 Features
-🔢 Enter a number (e.g., 507) → instantly get the Scripture reference + verse text.
-🌐 Choose translation: KJV, ASV, or WEB (World English Bible).
-📝 Add your own themes and reflections in My Journal.
-💾 Journal entries are saved locally on your device (no account required).
-📤 Export your journal as:
-JSON (backup/restore)
-CSV (open in Excel/Google Sheets)
-🔒 Your notes are private: all data stays in your browser’s local storage.
-🚀 How to Host on GitHub Pages
-Go to GitHub → New repository → name it something like bible-journey.
-Upload these files:
-index.html
-styles.css
-app.js
-KJV.csv, ASV.csv, and WEB.csv (translation data files)
-README.md
-Commit the changes.
-Go to Settings → Pages →
-Source: Deploy from a branch
-Branch: main (or master), folder: / (root)
-Wait 1–2 minutes. Your site will be published at:
+# 📖 Bible Journey — GitHub Pages Version
+
+Bible Journey is a lightweight web app you can host on **GitHub Pages** to connect numbers (often times you notice God highlighting) to **Scripture references and verses**. It includes a simple journal so you can reflect and save personal notes — all in your browser.
+
+---
+
+## 🌟 Features
+
+- 🔢 Enter a number (e.g., `507`) → get the **Scripture reference + verse text**.
+- 🌐 Choose translation: **KJV**, **ASV**, or **WEB** (World English Bible).
+- 📝 “**My Journal**” for your personal themes & reflections.
+- 💾 Entries saved **locally** on your device (no account).
+- 📤 Export journal as **CSV** (Excel/Sheets) or **JSON** (backup/restore).
+- 🔒 Your notes stay in the browser unless you export them.
+
+---
+
+## 🚀 Quick Start (End Users)
+
+1. Open the site:  
+   `https://biblejourneynumbers.github.io/Bible-Journey-Numbers/`
+2. Type a number → click **Resolve**.
+3. Pick a translation (KJV / ASV / WEB).
+4. Read the verse and notes, then add your own thoughts in **My Journal**.
+5. Export to CSV/JSON any time.
+
+---
+
+## 🛠️ Host Your Own on GitHub Pages
+
+1. Create a new GitHub repo (e.g., `bible-journey`).
+2. Upload these files to the repo root:
+   - `index.html`
+   - `styles.css`
+   - `app.js`
+   - `KJV.csv`, `ASV.csv`, `WEB.csv` (translation data files)
+   - `README.md`
+3. Commit the changes.
+4. Go to **Settings → Pages**:
+   - **Source:** *Deploy from a branch*
+   - **Branch:** `main` (or `master`), **Folder:** `/ (root)`
+5. Wait 1–2 minutes. Your app will appear at:
+
 
 https://biblejourneynumbers.github.io/Bible-Journey-Numbers/
 
@@ -40,36 +59,55 @@ https://biblejourneynumbers.github.io/Bible-Journey-Numbers/
 *(To add: create a `screenshots` folder in your repo and upload images, or drag/drop into GitHub’s editor and update the links.)*  
 
 ---
-📂 Adding or Editing Verses
-The verse data lives in the CSV files. Each translation has its own file:
-KJV.csv
-ASV.csv
-WEB.csv
-CSV Header Format
-Your CSV should have these columns (headers are case-insensitive):
-Number,Reference,Verse_Text (KJV/ASV/WEB),Themes,Quick Reflection,Extended Reflection,Alignment,Prayer
-Number → the numeric key (e.g., 507).
-Reference → the Scripture reference (e.g., Psalm 51:10).
-Verse_Text (…) → the verse text.
-Themes / Reflections / Alignment / Prayer → optional notes.
-When you commit changes to a CSV, refresh the site (Cmd+Shift+R) and the new content will be live.
-📝 Journal Section
-Add your own Themes + Reflection in the My Journal section.
-Entries include:
-Number
-Reference
-Verse
-CSV notes (Themes, Reflections, Alignment, Prayer)
-Your notes (My Themes, My Reflection)
-Translation used at the time
-Data is stored locally on your device in your browser storage.
-Use Export CSV for reviewing in Excel/Sheets.
-Use Export JSON for backup/restore.
-📄 License & Notes
-KJV and ASV are public domain.
-WEB (World English Bible) is also public domain.
-All verse text included here is free to use.
-Your journal entries are your own — they never leave your device unless you export them.
-✨ Tip: The app is intentionally simple and self-contained — no backend, no server, no database. It’s just HTML + CSS + JS running in your browser, powered by the CSV files you control.
+
+---
+
+## 📂 CSV Format (per translation)
+
+Headers are case-insensitive, but keep the wording:
+
+
+
+- **Number** → the numeric key (e.g., `507`)
+- **Reference** → e.g., `Psalm 51:10`
+- **Verse_Text (...)** → verse text for that translation
+- Remaining fields are optional study notes
+
+Commit changes to a CSV, then **hard refresh** the site (Cmd/Ctrl + Shift + R).
+
+---
+
+## 📝 My Journal
+
+Each entry includes:
+
+- Number, Reference, Verse
+- CSV notes (Themes/Quick/Extended/Alignment/Prayer)
+- **My Themes** and **My Reflection** (your personal notes)
+- Translation used at save time
+
+Data is stored only on your device (localStorage). Use **Export CSV** for spreadsheets and **Export JSON** for backups.
+
+---
+
+## 📜 Licenses / Credits
+
+- **KJV**, **ASV**, **WEB** (World English Bible) are **public domain**.  
+- WEB source: https://worldenglish.bible/ (public domain).  
+- This site is static (HTML/CSS/JS) and runs entirely in the browser.
+
+---
+
+## 📸 Screenshots
+
+_Main screen_
+
+![Main screen](docs/screenshot-main.png)
+
+_Journal section_
+
+![Journal](docs/screenshot-journal.png)
+
+
 ## ❤️ Why Bible Journey?  
 Numbers often catch our eye — on clocks, signs, or daily life moments. Bible Journey makes it simple to **connect those numbers with God’s Word**, reflect personally, and carry those insights with you.  
