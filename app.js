@@ -185,15 +185,36 @@ function renderJournal(list) {
   }
 }
 
-function saveEntry() {
+async function saveEntry() {
   const nRaw = numInput.value;
   const n    = normalizeNumber(nRaw);
-  const ref  = refOut.textContent || '';
-  const verse= verseText.textContent || '';
-  if (!n || !ref) return;
+  let ref    = (refOut.textContent || '').trim();
+  let verse  = (verseText.textContent || '').trim();
 
-  const themes     = document.getElementById('themes')?.value.trim() || '';
-  const reflection = document.getElementById('reflection')?.value.trim() || '';
+  if (!n) {
+    statusEl.textContent = 'Enter a number first.';
+    return;
+  }
+
+  // Ensure reference/verse + get CSV fields (themes/quick/extended/alignment/prayer)
+  let resolved;
+  try {
+    resolved = await getVerseForNumber(n);
+    if (resolved?.ref)   ref   = ref || resolved.ref;
+    if (resolved?.text)  verse = verse || resolved.text;
+  } catch (e) {
+    console.error(e);
+  }
+
+  if (!ref || !verse) {
+    statusEl.textContent = 'Resolve the number first (no verse text available).';
+    saveBtn.disabled = true;
+    return;
+  }
+
+  // Your own inputs
+  const myThemes     = document.getElementById('themes')?.value.trim() || '';
+  const myReflection = document.getElementById('reflection')?.value.trim() || '';
   const src = [...document.querySelectorAll('input[name="sourceType"]')]
                 .find(r => r.checked)?.value || 'Manual';
   const translation = (translationSelect?.value || '').toUpperCase();
@@ -205,8 +226,18 @@ function saveEntry() {
     number: n,
     reference: ref,
     verse,
-    themes,
-    reflection,
+
+    // CSV-sourced fields (read-only from your data files)
+    csvThemes:   resolved?.themes   || '',
+    csvQuick:    resolved?.quick    || '',
+    csvExtended: resolved?.extended || '',
+    csvAlign:    resolved?.align    || '',
+    csvPrayer:   resolved?.prayer   || '',
+
+    // User-entered fields
+    themes: myThemes,
+    reflection: myReflection,
+
     sourceType: src,
     translation
   });
@@ -214,6 +245,7 @@ function saveEntry() {
   renderJournal(list);
   statusEl.textContent = 'Saved to Journal (local on this device).';
 }
+
 
 // ---- JSON export ----
 function exportJSON() {
@@ -238,7 +270,11 @@ function exportCSV() {
   const raw  = localStorage.getItem('bj_journal') || '[]';
   const rows = JSON.parse(raw);
 
-  const headers = ['Date', 'Number', 'Reference', 'Verse', 'Themes', 'Reflection', 'Source', 'Translation'];
+  const headers = [
+    'Date','Number','Reference','Verse',
+    'CSV Themes','CSV Quick Reflection','CSV Extended Reflection','CSV Alignment','CSV Prayer',
+    'My Themes','My Reflection','Source','Translation'
+  ];
   const lines = [headers.join(',')];
 
   for (const r of rows) {
@@ -248,8 +284,13 @@ function exportCSV() {
       toCsvValue(r.number),
       toCsvValue(r.reference),
       toCsvValue(r.verse || ''),
-      toCsvValue(r.themes || ''),
-      toCsvValue(r.reflection || ''),
+      toCsvValue(r.csvThemes || ''),
+      toCsvValue(r.csvQuick || ''),
+      toCsvValue(r.csvExtended || ''),
+      toCsvValue(r.csvAlign || ''),
+      toCsvValue(r.csvPrayer || ''),
+      toCsvValue(r.themes || ''),        // your own input
+      toCsvValue(r.reflection || ''),    // your own input
       toCsvValue(r.sourceType || ''),
       toCsvValue(r.translation || '')
     ].join(','));
@@ -264,6 +305,7 @@ function exportCSV() {
   a.click();
   URL.revokeObjectURL(url);
 }
+
 
 // ---- Backfill missing fields in existing entries ----
 async function backfillJournal() {
