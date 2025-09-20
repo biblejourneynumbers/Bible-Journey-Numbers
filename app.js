@@ -8,6 +8,11 @@ const resolveBtn  = document.getElementById('resolveBtn');
 const saveBtn     = document.getElementById('saveBtn');
 const exportBtn   = document.getElementById('exportBtn');
 const journalList = document.getElementById('journalList');
+const themesOut   = document.getElementById('themesOut');
+const quickOut    = document.getElementById('quickOut');
+const extendedOut = document.getElementById('extendedOut');
+const alignOut    = document.getElementById('alignOut');
+const prayerOut   = document.getElementById('prayerOut');
 const translationSelect = document.getElementById('translation'); // <select id="translation">
 
 // Bump this when you deploy to force browsers to fetch fresh files
