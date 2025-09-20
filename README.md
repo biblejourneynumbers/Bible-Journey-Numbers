@@ -56,10 +56,6 @@ https://biblejourneynumbers.github.io/Bible-Journey-Numbers/
 <img width="863" height="410" alt="Screenshot 2025-09-20 at 1 44 16 PM" src="https://github.com/user-attachments/assets/063150f1-6297-43ac-bebf-9e2d1da4ce4b" />
 
 
-*(To add: create a `screenshots` folder in your repo and upload images, or drag/drop into GitHub’s editor and update the links.)*  
-
----
-
 ---
 
 ## 📂 CSV Format (per translation)
