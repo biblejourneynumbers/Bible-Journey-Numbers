@@ -10,26 +10,30 @@ const exportBtn   = document.getElementById('exportBtn');
 const journalList = document.getElementById('journalList');
 const translationSelect = document.getElementById('translation'); // <select id="translation">
 
+// Bump this when you deploy to force browsers to fetch fresh files
+const ASSET_VER = 'build-1';
+
 // Cache for CSV rows: { asv: [...], fbv: [...], kjv: [...] }
 let translationCache = {};
 
+// Map dropdown value -> CSV filename (exactly as in your repo)
 function csvUrlForTranslation(code) {
   switch ((code || '').toLowerCase()) {
-    case 'asv': return 'FullNumbers_WithVerses_ASV Time Complete.csv';
-    case 'fbv': return 'FullNumbers_WithVerses_FBV Time Complete.csv';
-    case 'kjv': return 'Bible_Journey JKV Time complete.csv';
-    default:    return 'FullNumbers_WithVerses_ASV Time Complete.csv';
+    case 'asv': return 'FullNumbers_WithVerses_ASV Time Complete.csv?v=' + ASSET_VER;
+    case 'fbv': return 'FullNumbers_WithVerses_FBV Time Complete.csv?v=' + ASSET_VER;
+    case 'kjv': return 'Bible_Journey JKV Time complete.csv?v=' + ASSET_VER;
+    default:    return 'FullNumbers_WithVerses_ASV Time Complete.csv?v=' + ASSET_VER;
   }
 }
 
-// Split CSV line respecting quotes
+// Split a CSV line while respecting quotes
 function splitCSV(line) {
   const out = [];
   let cur = '';
   let inQuotes = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
-    if (ch === '\"') {
+    if (ch === '"') {
       inQuotes = !inQuotes;
     } else if (ch === ',' && !inQuotes) {
       out.push(cur);
@@ -42,14 +46,15 @@ function splitCSV(line) {
   return out;
 }
 
-// Load CSV → array of row objects
+// Load CSV → array of row objects (headers are lowercased)
 async function loadCsv(url) {
   const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Failed to fetch ${url}`);
   const text = await res.text();
   const lines = text.split(/\r?\n/).filter(Boolean);
   if (!lines.length) return [];
-  const headers = splitCSV(lines.shift()).map(h => h.trim().toLowerCase());
 
+  const headers = splitCSV(lines.shift()).map(h => h.trim().toLowerCase());
   return lines.map(line => {
     const cells = splitCSV(line);
     const row = {};
@@ -58,24 +63,31 @@ async function loadCsv(url) {
   });
 }
 
-// Lookup verse for a given number
+// Lookup by Number directly from selected translation CSV
 async function getVerseForNumber(number) {
-  const code = (translationSelect?.value || 'asv').toLowerCase();
+  const code = (translationSelect?.value || 'kjv').toLowerCase();
+
   if (!translationCache[code]) {
     translationCache[code] = await loadCsv(csvUrlForTranslation(code));
   }
   const rows = translationCache[code];
 
-  // Adjust these names if needed based on your CSV headers
-  const hit = rows.find(r => String(r.number) === String(number));
-  if (!hit) return { ref: 'Not found', text: 'No verse text found.' };
+  // Our loader lowercases headers, so we look them up lowercased:
+  // "number", "reference", and "verse_text (kjv/asv/fbv)"
+  const hit = rows.find(r => String(r['number']) === String(number));
+  if (!hit) return { ref: 'Not found', text: 'No verse text found for this number.' };
 
-  const ref = `${hit.book} ${hit.chapter}:${hit.verse}`;
-  const text = hit.verse_text || hit.verse || '';
+  const ref = hit['reference'] || '';
+  const text =
+    hit['verse_text (kjv)'] ||
+    hit['verse_text (asv)'] ||
+    hit['verse_text (fbv)'] ||
+    '';
+
   return { ref, text };
 }
 
-// ===== Main resolve function =====
+// ===== Main resolve flow =====
 async function resolveNumber() {
   const n = numInput.value.trim();
   if (!n) {
@@ -92,11 +104,11 @@ async function resolveNumber() {
     const { ref, text } = await getVerseForNumber(n);
     refOut.textContent = ref;
     verseText.textContent = text;
-    statusEl.textContent = '';
+    statusEl.textContent = text ? '' : 'No verse text found.';
   } catch (e) {
     console.error(e);
-    statusEl.textContent = 'Error loading verse.';
-    verseText.textContent = 'Check your CSV headers or filenames.';
+    statusEl.textContent = 'Error loading verse. Check file names and headers.';
+    verseText.textContent = '';
   }
 }
 
@@ -169,13 +181,14 @@ resolveBtn?.addEventListener('click', resolveNumber);
 saveBtn?.addEventListener('click', saveEntry);
 exportBtn?.addEventListener('click', exportJSON);
 
-// If user switches translation, refresh current result
+// Auto-refresh result when translation changes
 translationSelect?.addEventListener('change', () => {
   if (!resultEl.classList.contains('hidden')) resolveNumber();
 });
 
-// Init
+// Init journal only (no journey_map anymore)
 loadJournal();
+
 
 
 
