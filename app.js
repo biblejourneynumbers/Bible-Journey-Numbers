@@ -169,21 +169,23 @@ function renderJournal(list) {
 }
 
 function saveEntry() {
-  const n = numInput.value.trim();
-  const ref = refOut.textContent || '';
+  const n    = numInput.value.trim();
+  const ref  = refOut.textContent || '';
+  const verse= verseText.textContent || '';
   if (!n || !ref) return;
 
-  const themes = document.getElementById('themes')?.value.trim() || '';
+  const themes     = document.getElementById('themes')?.value.trim() || '';
   const reflection = document.getElementById('reflection')?.value.trim() || '';
   const src = [...document.querySelectorAll('input[name="sourceType"]')]
                 .find(r => r.checked)?.value || 'Manual';
 
-  const raw = localStorage.getItem('bj_journal') || '[]';
+  const raw  = localStorage.getItem('bj_journal') || '[]';
   const list = JSON.parse(raw);
   list.unshift({
     date: new Date().toISOString(),
     number: n,
     reference: ref,
+    verse,               // <-- add verse text
     themes,
     reflection,
     sourceType: src
