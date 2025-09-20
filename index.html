@@ -5,15 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bible Journey → Scripture</title>
 
-  <!-- Load CSS with version to bust cache -->
-  <link rel="stylesheet" href="styles.css?v=build-2">
-
-  <!-- Prevent stale cache -->
+  <link rel="stylesheet" href="styles.css?v=build-4">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-
-  <!-- Mobile address bar color -->
   <meta name="theme-color" content="#0b1020">
 </head>
 <body>
@@ -22,31 +17,32 @@
       <h1>📖 Bible Journey</h1>
       <p class="subtitle">Type a number → choose a translation → see the Scripture reference and verse.</p>
     </header>
-<!-- How to Use card (place this right under the <header> and above the Lookup Card) -->
-<section class="card" style="margin-top:.5rem;">
-  <h2>✨ How to Use Bible Journey</h2>
-  <p class="muted">
-    Bible Journey helps you connect a <strong>number</strong> (often the time you notice God highlighting) to a
-    <strong>scripture reference</strong> and study notes, so you can reflect and respond.
-  </p>
 
-  <ol style="margin:0 0 .5rem 1.2rem;">
-    <li><strong>Notice a number</strong> (e.g., a time like <code>5:14</code> or a number you keep seeing).</li>
-    <li><strong>Type the number</strong> above and click <em>Resolve</em>.</li>
-    <li><strong>Choose a translation</strong> (ASV / FBV / KJV) to view the verse and study notes.</li>
-    <li>Use <strong>My Journal</strong> to record <em>your</em> themes and reflection. (Saved locally on this device.)</li>
-  </ol>
+    <!-- How to Use card -->
+    <section class="card" style="margin-top:.5rem;">
+      <h2>✨ How to Use Bible Journey</h2>
+      <p class="muted">
+        Bible Journey helps you connect a <strong>number</strong> (often the time you notice God highlighting) to a
+        <strong>scripture reference</strong> and study notes, so you can reflect and respond.
+      </p>
 
-  <div class="muted" style="font-size:13px; line-height:1.6;">
-    <strong>Tips:</strong>
-    <ul style="margin:.25rem 0 0 1.1rem;">
-      <li>If your number has leading zeros (e.g., <code>05</code>), just type the digits (e.g., <code>5</code>).</li>
-      <li>Click <strong>Export CSV</strong> to review your journal in Excel/Sheets; <strong>Export JSON</strong> is for backup/restore.</li>
-      <li>Entries include the translation you used at the time of saving.</li>
-      <li>Your journal is private — it’s stored in your browser’s local storage.</li>
-    </ul>
-  </div>
-</section>
+      <ol style="margin:0 0 .5rem 1.2rem;">
+        <li><strong>Notice a number</strong> (e.g., a time like <code>5:14</code> or a number you keep seeing).</li>
+        <li><strong>Type the number</strong> below and click <em>Resolve</em>.</li>
+        <li><strong>Choose a translation</strong> (KJV / ASV / WEB) to view the verse and study notes.</li>
+        <li>Use <strong>My Journal</strong> to record <em>your</em> themes and reflection. (Saved locally on this device.)</li>
+      </ol>
+
+      <div class="muted" style="font-size:13px; line-height:1.6;">
+        <strong>Tips:</strong>
+        <ul style="margin:.25rem 0 0 1.1rem;">
+          <li>If your number has leading zeros (e.g., <code>05</code>), just type the digits (e.g., <code>5</code>).</li>
+          <li>Click <strong>Export CSV</strong> to review your journal in Excel/Sheets; <strong>Export JSON</strong> is for backup/restore.</li>
+          <li>Entries include the translation you used at the time of saving.</li>
+          <li>Your journal is private — it’s stored in your browser’s local storage.</li>
+        </ul>
+      </div>
+    </section>
 
     <!-- Lookup Card -->
     <section class="card">
@@ -61,9 +57,9 @@
       <div class="input-row" style="margin-top:.5rem;">
         <label for="translation" class="inline-label" style="margin-right:.5rem;">Translation:</label>
         <select id="translation">
+          <option value="kjv" selected>KJV</option>
           <option value="asv">ASV</option>
-          <option value="fbv">FBV</option>
-          <option value="kjv">KJV</option>
+          <option value="web">WEB</option>
         </select>
       </div>
 
@@ -104,46 +100,44 @@
         </div>
       </div>
     </section>
-    
-<section class="card" style="margin-top:1rem;">
-  <h2>📝 My Journal</h2>
-  <p class="muted">
-    The Bible Journey helps you connect numbers (often the times God gives you) to scripture references.  
-    When you receive a number, type it above to see the verse and study notes.  
-    Use this section to record your <strong>personal reflections</strong> on what God may be speaking to you.
-  </p>
 
-  <div class="input-row">
-    <label for="themes">My Themes:</label>
-    <input id="themes" type="text" placeholder="e.g., Faith, Obedience">
-  </div>
+    <!-- My Journal -->
+    <section class="card" style="margin-top:1rem;">
+      <h2>📝 My Journal</h2>
+      <p class="muted">
+        Use this section to add your <strong>personal notes</strong> about each number. These entries are saved only on this device,
+        but you can export them to JSON or CSV for review later.
+      </p>
 
-  <div class="input-row">
-    <label for="reflection">My Reflection:</label>
-    <textarea id="reflection" rows="3" placeholder="What does this verse mean to me today?"></textarea>
-  </div>
+      <div class="input-row">
+        <label for="themes">My Themes:</label>
+        <input id="themes" type="text" placeholder="e.g., Faith, Obedience">
+      </div>
 
-  <div class="radio-row">
-    <label>Source:</label>
-    <label><input type="radio" name="sourceType" value="Manual" checked> Manual</label>
-    <label><input type="radio" name="sourceType" value="Watch"> Watch</label>
-  </div>
+      <div class="input-row">
+        <label for="reflection">My Reflection:</label>
+        <textarea id="reflection" rows="3" placeholder="What does this verse mean to me today?"></textarea>
+      </div>
 
-  <div class="input-row">
-    <button id="saveBtn">Save Entry</button>
-    <button id="exportBtn" class="secondary">Export JSON</button>
-    <button id="exportCsvBtn" class="secondary">Export CSV</button>
-    <button id="clearBtn" class="secondary">Clear Journal</button>
-  </div>
+      <div class="radio-row">
+        <label>Source:</label>
+        <label><input type="radio" name="sourceType" value="Manual" checked> Manual</label>
+        <label><input type="radio" name="sourceType" value="Watch"> Watch</label>
+      </div>
 
-  <div id="journalList" class="journal-list"></div>
-</section>
+      <div class="input-row">
+        <button id="saveBtn">Save Entry</button>
+        <button id="exportBtn" class="secondary">Export JSON</button>
+        <button id="exportCsvBtn" class="secondary">Export CSV</button>
+        <button id="clearBtn" class="secondary">Clear Journal</button>
+      </div>
 
-
+      <div id="journalList" class="journal-list"></div>
+    </section>
   </main>
 
-  <!-- Load app.js with version to avoid cache -->
-  <script src="app.js?v=build-2"></script>
+  <script src="app.js?v=build-4"></script>
 </body>
 </html>
+
 
