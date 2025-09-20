@@ -5,12 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bible Journey → Scripture</title>
   <link rel="stylesheet" href="styles.css">
+
+  <!-- prevent stale cache -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 </head>
 <body>
   <main class="container">
     <header>
       <h1>📖 Bible Journey</h1>
-      <p class="subtitle">Type a number → get a Scripture reference → note a short meaning.</p>
+      <p class="subtitle">
+        Type a number → choose a translation → see the Scripture reference and verse.
+      </p>
     </header>
 
     <section class="card">
@@ -37,7 +44,7 @@
         <h2 id="refOut"></h2>
         <div class="verse">
           <strong>Verse (text):</strong>
-          <p id="verseText">ASV/FBV/KJV will be added soon. For now we show the reference so you can verify in your Bible.</p>
+          <p id="verseText"></p>
         </div>
         <div class="meaning">
           <strong>Meaning (short):</strong>
@@ -45,8 +52,39 @@
         </div>
       </div>
     </section>
+
+    <!-- Journal section -->
+    <section class="card" style="margin-top:1rem;">
+      <h2>📝 Journal</h2>
+      <p class="muted">Save your reflections locally on this device.</p>
+
+      <div class="input-row">
+        <label for="themes">Themes:</label>
+        <input id="themes" type="text" placeholder="e.g., Faith, Obedience">
+      </div>
+
+      <div class="input-row">
+        <label for="reflection">Reflection:</label>
+        <textarea id="reflection" rows="3" placeholder="Your reflection here..."></textarea>
+      </div>
+
+      <div class="input-row">
+        <label>Source:</label>
+        <label><input type="radio" name="sourceType" value="Manual" checked> Manual</label>
+        <label><input type="radio" name="sourceType" value="Watch"> Watch</label>
+      </div>
+
+      <div class="input-row">
+        <button id="saveBtn">Save Entry</button>
+        <button id="exportBtn">Export Journal</button>
+      </div>
+
+      <div id="journalList" class="journal-list"></div>
+    </section>
   </main>
 
-  <script src="app.js"></script>
+  <!-- include app.js with version to avoid cache -->
+  <script src="app.js?v=build-1"></script>
 </body>
 </html>
+
