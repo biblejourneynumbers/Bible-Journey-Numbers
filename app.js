@@ -178,12 +178,23 @@ function renderJournal(list) {
     const div = document.createElement('div');
     div.className = 'journal-item';
     const dt = new Date(item.date).toLocaleString();
-    div.innerHTML = `<strong>${dt}</strong> — #${item.number}<br>
-    <em>Themes:</em> ${item.themes || ''}<br>
-    <em>Reflection:</em> ${item.reflection || ''}`;
+
+    div.innerHTML = `
+      <strong>${dt}</strong> — #${item.number}${item.translation ? ' (' + item.translation + ')' : ''}<br>
+      <em>Ref:</em> ${item.reference || ''}<br>
+      <em>Verse:</em> ${item.verse || ''}<br>
+      <em>CSV Themes:</em> ${item.csvThemes || ''}<br>
+      <em>CSV Quick:</em> ${item.csvQuick || ''}<br>
+      <em>CSV Extended:</em> ${item.csvExtended || ''}<br>
+      <em>CSV Alignment:</em> ${item.csvAlign || ''}<br>
+      <em>CSV Prayer:</em> ${item.csvPrayer || ''}<br>
+      <em>My Themes:</em> ${item.themes || ''}<br>
+      <em>My Reflection:</em> ${item.reflection || ''}
+    `;
     journalList.appendChild(div);
   }
 }
+
 
 async function saveEntry() {
   const nRaw = numInput.value;
