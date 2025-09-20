@@ -14,9 +14,6 @@ const extendedOut = document.getElementById('extendedOut');
 const alignOut    = document.getElementById('alignOut');
 const prayerOut   = document.getElementById('prayerOut');
 const translationSelect = document.getElementById('translation'); // <select id="translation">
-const backfillBtn = document.getElementById('backfillBtn');
-backfillBtn?.addEventListener('click', backfillJournal);
-
 
 // Bump this when you deploy to force browsers to fetch fresh files
 const ASSET_VER = 'build-1';
@@ -172,15 +169,16 @@ function renderJournal(list) {
 }
 
 function saveEntry() {
-  const n    = numInput.value.trim();
-  const ref  = refOut.textContent || '';
-  const verse= verseText.textContent || '';
+  const n     = numInput.value.trim();
+  const ref   = refOut.textContent || '';
+  const verse = verseText.textContent || '';
   if (!n || !ref) return;
 
   const themes     = document.getElementById('themes')?.value.trim() || '';
   const reflection = document.getElementById('reflection')?.value.trim() || '';
   const src = [...document.querySelectorAll('input[name="sourceType"]')]
                 .find(r => r.checked)?.value || 'Manual';
+  const translation = (translationSelect?.value || '').toUpperCase();
 
   const raw  = localStorage.getItem('bj_journal') || '[]';
   const list = JSON.parse(raw);
@@ -188,16 +186,18 @@ function saveEntry() {
     date: new Date().toISOString(),
     number: n,
     reference: ref,
-    verse,               // <-- add verse text
+    verse,
     themes,
     reflection,
-    sourceType: src
+    sourceType: src,
+    translation
   });
   localStorage.setItem('bj_journal', JSON.stringify(list));
   renderJournal(list);
   statusEl.textContent = 'Saved to Journal (local on this device).';
 }
 
+// ---- JSON export ----
 function exportJSON() {
   const raw = localStorage.getItem('bj_journal') || '[]';
   const blob = new Blob([raw], { type: 'application/json' });
@@ -208,62 +208,7 @@ function exportJSON() {
   a.click();
   URL.revokeObjectURL(url);
 }
-function toCsvValue(s) {
-  if (s == null) return '';
-  const t = String(s).replace(/"/g, '""');
-  return /[",\n]/.test(t) ? `"${t}"` : t;
-}
 
-// ---- CSV export (Windows-friendly with BOM) ----
-function toCsvValue(s) {
-  if (s == null) return '';
-  const t = String(s).replace(/"/g, '""');
-  return /[",\n]/.test(t) ? `"${t}"` : t;
-}
-
-function exportCSV() {
-  const raw  = localStorage.getItem('bj_journal') || '[]';
-  const rows = JSON.parse(raw);
-
-  const headers = ['Date', 'Number', 'Reference', 'Verse', 'Themes', 'Reflection', 'Source', 'Translation'];
-  const lines = [headers.join(',')];
-
-  for (const r of rows) {
-    const local = new Date(r.date).toLocaleString();
-    lines.push([
-      toCsvValue(local),
-      toCsvValue(r.number),
-      toCsvValue(r.reference),
-      toCsvValue(r.verse || ''),
-      toCsvValue(r.themes || ''),
-      toCsvValue(r.reflection || ''),
-      toCsvValue(r.sourceType || ''),
-      toCsvValue(r.translation || '')
-    ].join(','));
-  }
-
-  const csv = '\uFEFF' + lines.join('\r\n'); // BOM for Excel
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'bible_journey_journal.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-// ---- Backfill missing fields in existing entries ----
-async function backfillJournal() {
-  statusEl.textContent = 'Backfilling…';
-  const raw  = localStorage.getItem('bj_journal') || '[]';
-  const list = JSON.parse(raw);
-
-  let changed = 0;
-  for (let i = 0; i < list.length; i++) {
-    const r = list[i];
-
-    // If verse already present, skip
-    if (r.verse && r.verse.trim(
 // ---- CSV export (Windows-friendly with BOM) ----
 function toCsvValue(s) {
   if (s == null) return '';
@@ -332,46 +277,12 @@ async function backfillJournal() {
     : 'Nothing to backfill.';
 }
 
-// ---- (Optional) Clear all entries ----
+// ---- Clear all entries ----
 function clearJournal() {
   if (!confirm('This will permanently delete all saved journal entries on this device. Continue?')) return;
   localStorage.removeItem('bj_journal');
   renderJournal([]);
   statusEl.textContent = 'Journal cleared on this device.';
-}
-
-  localStorage.setItem('bj_journal', JSON.stringify(list));
-  renderJournal(list);
-  statusEl.textContent = changed
-    ? `Backfilled ${changed} entr${changed === 1 ? 'y' : 'ies'}.`
-    : 'Nothing to backfill.';
-}
-
-  // Headers for Excel/Sheets
-  const headers = ['Date', 'Number', 'Reference', 'Verse', 'Themes', 'Reflection', 'Source'];
-  const lines = [headers.join(',')];
-
-  for (const r of rows) {
-    const local = new Date(r.date).toLocaleString(); // friendlier than ISO
-    lines.push([
-      toCsvValue(local),
-      toCsvValue(r.number),
-      toCsvValue(r.reference),
-      toCsvValue(r.verse || ''),        // we added this in saveEntry()
-      toCsvValue(r.themes || ''),
-      toCsvValue(r.reflection || ''),
-      toCsvValue(r.sourceType || '')
-    ].join(','));
-  }
-
-  const csv = lines.join('\r\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'bible_journey_journal.csv';
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 /* =========================
@@ -380,14 +291,20 @@ function clearJournal() {
 resolveBtn?.addEventListener('click', resolveNumber);
 saveBtn?.addEventListener('click', saveEntry);
 exportBtn?.addEventListener('click', exportJSON);
+
 const exportCsvBtn = document.getElementById('exportCsvBtn');
 exportCsvBtn?.addEventListener('click', exportCSV);
 
+const backfillBtn = document.getElementById('backfillBtn');
+backfillBtn?.addEventListener('click', backfillJournal);
+
+const clearBtn = document.getElementById('clearBtn');
+clearBtn?.addEventListener('click', clearJournal);
 
 // Auto-refresh result when translation changes
 translationSelect?.addEventListener('change', () => {
   if (!resultEl.classList.contains('hidden')) resolveNumber();
 });
 
-// Init journal only (no journey_map anymore)
+// Init journal
 loadJournal();
