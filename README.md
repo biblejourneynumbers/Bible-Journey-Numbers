@@ -52,6 +52,19 @@ This verse captures the heart of Bible Journey: every number is an invitation to
    - Branch: `main` (or `master`) and `/ (root)`  
 5. Wait 1–2 minutes → your site will be live at:  
 
+https://biblejourneynumbers.github.io/Bible-Journey-Numbers/
+
+---
+
+## 🖼 Screenshots  
+
+### Main Screen  
+![Bible Journey Main](screenshots/main.png)  
+
+### My Journal Section  
+![Bible Journey Journal](screenshots/journal.png)  
+
+*(To add: create a `screenshots` folder in your repo and upload images, or drag/drop into GitHub’s editor and update the links.)*  
 
 ---
 
