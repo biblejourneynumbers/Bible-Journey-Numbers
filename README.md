@@ -98,16 +98,6 @@ Data is stored only on your device (localStorage). Use **Export CSV** for spread
 
 ---
 
-## 📸 Screenshots
-
-_Main screen_
-
-![Main screen](docs/screenshot-main.png)
-
-_Journal section_
-
-![Journal](docs/screenshot-journal.png)
-
 
 ## ❤️ Why Bible Journey?  
 Numbers often catch our eye — on clocks, signs, or daily life moments. Bible Journey makes it simple to **connect those numbers with God’s Word**, reflect personally, and carry those insights with you.  
