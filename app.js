@@ -1,5 +1,4 @@
 // ===== DOM refs =====
-let mapping = new Map();
 const statusEl    = document.getElementById('status');
 const resultEl    = document.getElementById('result');
 const refOut      = document.getElementById('refOut');
@@ -11,44 +10,19 @@ const exportBtn   = document.getElementById('exportBtn');
 const journalList = document.getElementById('journalList');
 const translationSelect = document.getElementById('translation'); // <select id="translation">
 
-// Cache for translation CSV rows: { asv: [...], fbv: [...], kjv: [...] }
+// Cache for CSV rows: { asv: [...], fbv: [...], kjv: [...] }
 let translationCache = {};
 
-/* =========================
- *  Mapping (journey_map.csv)
- * ========================= */
-async function loadMapping() {
-  statusEl.textContent = 'Loading mapping…';
-  try {
-    const res = await fetch('journey_map.csv', { cache: 'no-store' });
-    const txt = await res.text();
-    parseCSV(txt);
-    statusEl.textContent = `Loaded ${mapping.size} mappings.`;
-  } catch (e) {
-    console.error(e);
-    statusEl.textContent = 'Could not load mapping file.';
+function csvUrlForTranslation(code) {
+  switch ((code || '').toLowerCase()) {
+    case 'asv': return 'FullNumbers_WithVerses_ASV Time Complete.csv';
+    case 'fbv': return 'FullNumbers_WithVerses_FBV Time Complete.csv';
+    case 'kjv': return 'Bible_Journey JKV Time complete.csv';
+    default:    return 'FullNumbers_WithVerses_ASV Time Complete.csv';
   }
 }
 
-function parseCSV(csv) {
-  const lines = csv.split(/\r?\n/).filter(Boolean);
-  const header = lines.shift();
-  const cols = header.split(',').map(s => s.trim().toLowerCase());
-  const numIdx    = cols.indexOf('number');
-  const refIdx    = cols.indexOf('reference');
-  const reasonIdx = cols.indexOf('reason');
-
-  for (const line of lines) {
-    const parts = splitCSV(line);
-    if (!parts.length) continue;
-    const num    = (parts[numIdx] || '').trim();
-    const ref    = (parts[refIdx] || '').trim();
-    const reason = (parts[reasonIdx] || '').trim();
-    if (num && ref) mapping.set(num, { ref, reason });
-  }
-}
-
-// CSV line splitter that respects simple quotes
+// Split CSV line respecting quotes
 function splitCSV(line) {
   const out = [];
   let cur = '';
@@ -68,19 +42,7 @@ function splitCSV(line) {
   return out;
 }
 
-/* =========================
- *  Translation CSV loading
- * ========================= */
-function csvUrlForTranslation(code) {
-  switch ((code || '').toLowerCase()) {
-    case 'asv': return 'FullNumbers_WithVerses_ASV Time Complete.csv';
-    case 'fbv': return 'FullNumbers_WithVerses_FBV Time Complete.csv';
-    case 'kjv': return 'Bible_Journey JKV Time complete.csv';
-    default:    return 'FullNumbers_WithVerses_ASV Time Complete.csv';
-  }
-}
-
-// Load CSV → array<rowObject> using the same splitter
+// Load CSV → array of row objects
 async function loadCsv(url) {
   const res = await fetch(url, { cache: 'no-store' });
   const text = await res.text();
@@ -96,58 +58,45 @@ async function loadCsv(url) {
   });
 }
 
-// Return verse text (and fallback ref) for a number from the selected translation
-async function getVerseTextFromTranslation(number) {
+// Lookup verse for a given number
+async function getVerseForNumber(number) {
   const code = (translationSelect?.value || 'asv').toLowerCase();
-
   if (!translationCache[code]) {
     translationCache[code] = await loadCsv(csvUrlForTranslation(code));
   }
   const rows = translationCache[code];
 
-  // Expected columns (adjust here if your CSV headers differ):
-  // number, book, chapter, verse, verse_text
+  // Adjust these names if needed based on your CSV headers
   const hit = rows.find(r => String(r.number) === String(number));
-  if (!hit) return { text: '', builtRef: '' };
+  if (!hit) return { ref: 'Not found', text: 'No verse text found.' };
 
+  const ref = `${hit.book} ${hit.chapter}:${hit.verse}`;
   const text = hit.verse_text || hit.verse || '';
-  const builtRef =
-    hit.book && hit.chapter && hit.verse ? `${hit.book} ${hit.chapter}:${hit.verse}` : '';
-
-  return { text, builtRef };
+  return { ref, text };
 }
 
-/* =========================
- *  Resolve flow
- * ========================= */
+// ===== Main resolve function =====
 async function resolveNumber() {
   const n = numInput.value.trim();
   if (!n) {
     statusEl.textContent = 'Enter a number.';
     return;
   }
-  const hit = mapping.get(n);
-  if (!hit) {
-    statusEl.textContent = 'No mapping found yet. Add it to journey_map.csv later.';
-    resultEl.classList.add('hidden');
-    return;
-  }
 
-  // Show reference immediately from mapping; then load verse text from translation
   statusEl.textContent = 'Loading verse…';
-  refOut.textContent = hit.ref;
-  verseText.textContent = '…';
   resultEl.classList.remove('hidden');
+  refOut.textContent = '';
+  verseText.textContent = '…';
 
   try {
-    const { text, builtRef } = await getVerseTextFromTranslation(n);
-    if (!hit.ref && builtRef) refOut.textContent = builtRef; // fallback if mapping had no ref
-    verseText.textContent = text || 'No verse text found in selected translation.';
+    const { ref, text } = await getVerseForNumber(n);
+    refOut.textContent = ref;
+    verseText.textContent = text;
     statusEl.textContent = '';
   } catch (e) {
     console.error(e);
-    statusEl.textContent = 'Error loading verse text.';
-    verseText.textContent = 'KJV/CSB text will be added soon. For now, verify in your Bible.';
+    statusEl.textContent = 'Error loading verse.';
+    verseText.textContent = 'Check your CSV headers or filenames.';
   }
 }
 
@@ -170,7 +119,7 @@ function renderJournal(list) {
     const div = document.createElement('div');
     div.className = 'journal-item';
     const dt = new Date(item.date).toLocaleString();
-    div.innerHTML = `<strong>${dt}</strong> — #${item.number} (${item.sourceType}) → ${item.reference}<br>
+    div.innerHTML = `<strong>${dt}</strong> — #${item.number}<br>
     <em>Themes:</em> ${item.themes || ''}<br>
     <em>Reflection:</em> ${item.reflection || ''}`;
     journalList.appendChild(div);
@@ -179,8 +128,9 @@ function renderJournal(list) {
 
 function saveEntry() {
   const n = numInput.value.trim();
-  const hit = mapping.get(n);
-  if (!hit) return;
+  const ref = refOut.textContent || '';
+  if (!n || !ref) return;
+
   const themes = document.getElementById('themes')?.value.trim() || '';
   const reflection = document.getElementById('reflection')?.value.trim() || '';
   const src = [...document.querySelectorAll('input[name="sourceType"]')]
@@ -191,7 +141,7 @@ function saveEntry() {
   list.unshift({
     date: new Date().toISOString(),
     number: n,
-    reference: hit.ref,
+    reference: ref,
     themes,
     reflection,
     sourceType: src
@@ -219,12 +169,13 @@ resolveBtn?.addEventListener('click', resolveNumber);
 saveBtn?.addEventListener('click', saveEntry);
 exportBtn?.addEventListener('click', exportJSON);
 
-// If the user switches translation, refresh current result (if visible)
+// If user switches translation, refresh current result
 translationSelect?.addEventListener('change', () => {
   if (!resultEl.classList.contains('hidden')) resolveNumber();
 });
 
-// Kickoff
-loadMapping();
+// Init
 loadJournal();
+
+
 
