@@ -18,7 +18,7 @@ const translationSelect = document.getElementById('translation');
 saveBtn.disabled = true; // only enable after a successful resolve
 
 // ===== Cache-busting =====
-const ASSET_VER = 'build-4';
+const ASSET_VER = 'build-5';
 
 // ===== CSV cache =====
 let translationCache = {}; // { asv: rows[], web: rows[], kjv: rows[] }
@@ -39,7 +39,11 @@ function candidateFilesForTranslation(code) {
     return ['FullNumbers_WithVerses_ASV Time Complete.csv', 'ASV.csv'];
   }
   if (c === 'web') {
-    return ['FullNumbers_WithVerses_WEB.csv', 'WEB.csv'];
+    return [
+      'FullNumbers_WithVerses_WEB.csv',
+      'FullNumbers_WithVerses_WEB Time Complete.csv',
+      'WEB.csv'
+    ];
   }
   // KJV — support both spellings from earlier
   return ['Bible_Journey JKV Time complete.csv', 'Bible_Journey KJV Time Complete.csv', 'KJV.csv'];
@@ -47,24 +51,28 @@ function candidateFilesForTranslation(code) {
 
 async function fetchFirstAvailable(candidates) {
   let lastErr;
+  const tried = [];
   for (const name of candidates) {
     const url = encodeURI(name + '?v=' + ASSET_VER);
+    tried.push(name);
     try {
       const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
       if (text && text.trim().length) {
-        return text;
+        return { text, name };
       }
     } catch (e) {
       lastErr = e;
       // try next
     }
   }
-  throw lastErr || new Error('No CSV found');
+  const err = new Error('No CSV found');
+  err.tried = tried;
+  err.cause = lastErr;
+  throw err;
 }
 
-// ----- CSV parsing (comma-delimited with quotes)
 // --- Robust CSV parser that handles commas, quotes, and newlines inside quotes
 function parseCsvRaw(text) {
   const rows = [];
@@ -122,15 +130,21 @@ function parseCsvText(text) {
   });
 }
 
-
 // ----- Load CSV for a translation
 async function ensureCsvLoaded(code) {
   const k = (code || 'kjv').toLowerCase();
   if (!translationCache[k]) {
     statusEl.textContent = 'Loading translation data…';
-    const txt = await fetchFirstAvailable(candidateFilesForTranslation(k));
-    translationCache[k] = parseCsvText(txt);
-    statusEl.textContent = `Loaded ${translationCache[k].length} rows for ${k.toUpperCase()}.`;
+    let payload;
+    try {
+      payload = await fetchFirstAvailable(candidateFilesForTranslation(k));
+    } catch (e) {
+      console.error(e);
+      statusEl.textContent = `Could not load ${k.toUpperCase()} CSV. Tried: ${e.tried?.join(' | ') || 'n/a'}.`;
+      throw e;
+    }
+    translationCache[k] = parseCsvText(payload.text);
+    statusEl.textContent = `Loaded ${translationCache[k].length} rows from "${payload.name}".`;
   }
   return translationCache[k];
 }
