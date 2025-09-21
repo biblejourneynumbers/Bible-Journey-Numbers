@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bible Journey → Scripture</title>
 
-  <link rel="stylesheet" href="styles.css?v=build-6">
+  <link rel="stylesheet" href="styles.css?v=build-7">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -18,32 +18,6 @@
       <p class="subtitle">Type a number → choose a translation → see the Scripture reference and verse.</p>
     </header>
 
-    <!-- How to Use card -->
-    <section class="card" style="margin-top:.5rem;">
-      <h2>✨ How to Use Bible Journey</h2>
-      <p class="muted">
-        Bible Journey helps you connect a <strong>Time</strong> (often the time you notice God highlighting) to a
-        <strong>scripture reference</strong> and study notes, so you can reflect and respond.
-      </p>
-
-      <ol style="margin:0 0 .5rem 1.2rem;">
-        <li><strong>Notice a Time</strong> (e.g., a time like <code>5:14</code> or a time you keep seeing).</li>
-        <li><strong>Type the number</strong> below and click <em>Resolve</em>.</li>
-        <li><strong>Choose a translation</strong> (KJV / ASV / WEB) to view the verse and study notes.</li>
-        <li>Use <strong>My Journal</strong> to record <em>your</em> themes and reflection. (Saved locally on this device.)</li>
-      </ol>
-
-      <div class="muted" style="font-size:13px; line-height:1.6;">
-        <strong>Tips:</strong>
-        <ul style="margin:.25rem 0 0 1.1rem;">
-          <li>If your number has leading zeros (e.g., <code>05</code>), just type the digits (e.g., <code>5</code>).</li>
-          <li>Click <strong>Export CSV</strong> to review your journal in Excel/Sheets; <strong>Export JSON</strong> is for backup/restore.</li>
-          <li>Entries include the translation you used at the time of saving.</li>
-          <li>Your journal is private — it’s stored in your browser’s local storage.</li>
-        </ul>
-      </div>
-    </section>
-
     <!-- Lookup Card -->
     <section class="card">
       <label for="numInput">Enter number</label>
@@ -53,7 +27,6 @@
         <button id="resolveBtn">Resolve</button>
       </div>
 
-      <!-- Translation selector -->
       <div class="input-row" style="margin-top:.5rem;">
         <label for="translation" class="inline-label" style="margin-right:.5rem;">Translation:</label>
         <select id="translation">
@@ -65,7 +38,6 @@
 
       <p id="status" class="status"></p>
 
-      <!-- Result -->
       <div id="result" class="result hidden">
         <h2 id="refOut"></h2>
 
@@ -104,11 +76,6 @@
     <!-- My Journal -->
     <section class="card" style="margin-top:1rem;">
       <h2>📝 My Journal</h2>
-      <p class="muted">
-        Use this section to add your <strong>personal notes</strong> about each number. These entries are saved only on this device,
-        but you can export them to JSON or CSV for review later.
-      </p>
-
       <div class="input-row">
         <label for="themes">My Themes:</label>
         <input id="themes" type="text" placeholder="e.g., Faith, Obedience">
@@ -127,7 +94,7 @@
 
       <div class="input-row">
         <button id="saveBtn">Save Entry</button>
-        <button id="exportBtn" class="secondary">Export JSON</button>
+        <button id="exportMdBtn" class="secondary">Export Markdown</button>
         <button id="exportCsvBtn" class="secondary">Export CSV</button>
         <button id="clearBtn" class="secondary">Clear Journal</button>
       </div>
@@ -136,8 +103,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=build-6"></script>
+  <script src="app.js?v=build-7"></script>
 </body>
 </html>
-
-
