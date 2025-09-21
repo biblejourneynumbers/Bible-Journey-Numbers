@@ -318,26 +318,37 @@ function mdBlock(label, val) {
 function exportMarkdown() {
   const raw  = localStorage.getItem('bj_journal') || '[]';
   const rows = JSON.parse(raw);
-  const lines = ['# My Bible Journey Journal\n'];
 
-  for (const r of rows) {
-    const local = new Date(r.date).toLocaleString();
-    lines.push(
-      mdBlock('Date', local) +
-      mdBlock('Number', r.number) +
-      mdBlock('Reference', r.reference) +
-      mdBlock('Verse', r.verse) + '\n' +
-      mdBlock('Themes', r.csvThemes) +
-      mdBlock('Quick Reflection', r.csvQuick) +
-      mdBlock('Extended Reflection', r.csvExtended) +
-      mdBlock('Alignment', r.csvAlign) +
-      mdBlock('Prayer', r.csvPrayer) + '\n' +
-      mdBlock('My Themes', r.themes) +
-      mdBlock('My Reflection', r.reflection) +
-      mdBlock('Source', r.sourceType) +
-      mdBlock('Translation', r.translation) +
-      '\n---\n'
-    );
+  const lines = ['# My Bible Journey Journal\n\n'];
+
+  if (!rows.length) {
+    lines.push('No entries yet. Use “Save Entry” in My Journal, then export again.\n');
+  } else {
+    for (const r of rows) {
+      const local = new Date(r.date).toLocaleString();
+
+      // Entry title line (no asterisks anywhere)
+      const title = `${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}`;
+
+      lines.push(
+`## ${title}
+Date: ${local}
+Verse: ${r.verse || ''}
+
+Themes: ${r.csvThemes || ''}
+Quick Reflection: ${r.csvQuick || ''}
+Extended Reflection: ${r.csvExtended || ''}
+Alignment: ${r.csvAlign || ''}
+Prayer: ${r.csvPrayer || ''}
+
+My Themes: ${r.themes || ''}
+My Reflection: ${r.reflection || ''}
+Source: ${r.sourceType || ''}
+
+---
+`
+      );
+    }
   }
 
   const md = lines.join('');
@@ -349,6 +360,7 @@ function exportMarkdown() {
   a.click();
   URL.revokeObjectURL(url);
 }
+
 
 // ---- Clear all entries ----
 function clearJournal() {
