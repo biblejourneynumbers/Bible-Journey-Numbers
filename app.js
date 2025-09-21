@@ -362,42 +362,49 @@ function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
-/* ---------- Export Markdown-formatted TEXT (.txt) ---------- */
-function exportMarkdown() {
+/* ---------- Export Text (plain .txt, no Markdown tokens) ---------- */
+function exportTextPlain() {
   const rows = getJournal();
-  const lines = ['# My Bible Journey Journal\n\n'];
+  const lines = [];
+
+  lines.push('My Bible Journey Journal');
+  lines.push(''); // blank line
 
   if (!rows.length) {
-    lines.push('_No entries yet. Use **Save Entry** in My Journal, then export again._\n');
+    lines.push('No entries yet. Use "Save Entry" in My Journal, then export again.');
   } else {
     for (const r of rows) {
       const local = new Date(r.date).toLocaleString();
       const title = `${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}`;
 
-      const mdBlock = (label, val) => (val && String(val).trim())
-        ? `**${label}:** ${String(val).trim()}\n`
-        : '';
-
-      lines.push(
-`${title}
-${mdBlock('Date', local)}${mdBlock('Verse', r.verse)}
-${mdBlock('Themes', r.csvThemes)}${mdBlock('Quick Reflection', r.csvQuick)}${mdBlock('Extended Reflection', r.csvExtended)}${mdBlock('Alignment', r.csvAlign)}${mdBlock('Prayer', r.csvPrayer)}
-${mdBlock('My Themes', r.themes)}${mdBlock('My Reflection', r.reflection)}${mdBlock('Source', r.sourceType)}${mdBlock('Translation', r.translation)}
-`
-      );
-      lines.push('\n'); // blank line between entries
+      lines.push(title);
+      lines.push(`Date: ${local}`);
+      lines.push(`Verse: ${r.verse || ''}`);
+      lines.push('');
+      lines.push(`Themes: ${r.csvThemes || ''}`);
+      lines.push(`Quick Reflection: ${r.csvQuick || ''}`);
+      lines.push(`Extended Reflection: ${r.csvExtended || ''}`);
+      lines.push(`Alignment: ${r.csvAlign || ''}`);
+      lines.push(`Prayer: ${r.csvPrayer || ''}`);
+      lines.push('');
+      lines.push(`My Themes: ${r.themes || ''}`);
+      lines.push(`My Reflection: ${r.reflection || ''}`);
+      lines.push(`Source: ${r.sourceType || ''}`);
+      lines.push(`Translation: ${r.translation || ''}`);
+      lines.push(''); // blank line between entries
     }
   }
 
-  const textOut = lines.join('');
+  const textOut = lines.join('\n');
   const blob = new Blob([textOut], { type: 'text/plain;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'bible_journey_journal.txt';   // <- now .txt
+  a.download = 'bible_journey_journal.txt';
   a.click();
   URL.revokeObjectURL(url);
 }
+
 
 
 /* ---------- Copy for Social (all entries, plain text) ---------- */
