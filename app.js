@@ -65,43 +65,63 @@ async function fetchFirstAvailable(candidates) {
 }
 
 // ----- CSV parsing (comma-delimited with quotes)
-function splitCSV(line) {
-  const out = [];
-  let cur = '';
+// --- Robust CSV parser that handles commas, quotes, and newlines inside quotes
+function parseCsvRaw(text) {
+  const rows = [];
+  let row = [];
+  let field = '';
   let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+
     if (ch === '"') {
-      // If we're in quotes and see a doubled quote, treat it as a literal quote
-      if (inQuotes && line[i + 1] === '"') {
-        cur += '"';
-        i++; // skip the next quote
+      // double-quote inside quoted field -> literal quote
+      if (inQuotes && text[i + 1] === '"') {
+        field += '"';
+        i++;
       } else {
-        inQuotes = !inQuotes; // toggle quoted state
+        inQuotes = !inQuotes;
       }
     } else if (ch === ',' && !inQuotes) {
-      out.push(cur);
-      cur = '';
+      row.push(field);
+      field = '';
+    } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+      // end of record (handle CRLF as one)
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = '';
     } else {
-      cur += ch;
+      field += ch;
     }
   }
-  out.push(cur);
-  return out;
-}
 
+  // push last field/row
+  if (field.length > 0 || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+
+  return rows;
+}
 
 function parseCsvText(text) {
-  const lines = text.split(/\r?\n/).filter(Boolean);
-  if (!lines.length) return [];
-  const headers = splitCSV(lines.shift()).map(h => h.trim().toLowerCase());
-  return lines.map(line => {
-    const cells = splitCSV(line);
-    const row = {};
-    headers.forEach((h, i) => (row[h] = (cells[i] ?? '').trim()));
-    return row;
+  const matrix = parseCsvRaw(text)
+    // drop blank rows
+    .filter(r => r && r.some(c => String(c).trim() !== ''));
+
+  if (!matrix.length) return [];
+
+  const headers = matrix.shift().map(h => String(h).trim().toLowerCase());
+  return matrix.map(cells => {
+    const obj = {};
+    headers.forEach((h, i) => (obj[h] = String(cells[i] ?? '').trim()));
+    return obj;
   });
 }
+
 
 // ----- Load CSV for a translation
 async function ensureCsvLoaded(code) {
