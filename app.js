@@ -17,7 +17,7 @@ const translationSelect = document.getElementById('translation');
 saveBtn.disabled = true; // only enable after a successful resolve
 
 // ===== Cache-busting =====
-const ASSET_VER = 'build-7';
+const ASSET_VER = 'build-8';
 
 // ===== CSV cache =====
 let translationCache = {}; // { asv: rows[], web: rows[], kjv: rows[] }
@@ -309,54 +309,83 @@ function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
-// ---- Markdown export (nice for UpNote/Notion/Obsidian)
-function mdBlock(label, val) {
-  const v = (val || '').trim();
-  return v ? `**${label}:** ${v}\n` : '';
-}
-
-function exportMarkdown() {
-  const raw  = localStorage.getItem('bj_journal') || '[]';
-  const rows = JSON.parse(raw);
-
-  const lines = ['# My Bible Journey Journal\n'];
+// ---- Plain Text export (no asterisks, .txt file)
+function exportPlainText() {
+  const rows = JSON.parse(localStorage.getItem('bj_journal') || '[]');
+  const lines = ['My Bible Journey Journal\n'];
 
   if (!rows.length) {
-    lines.push('_No entries yet. Use **Save Entry** in My Journal, then export again._\n');
+    lines.push('\nNo entries yet. Use "Save Entry" in My Journal, then export again.\n');
   } else {
     for (const r of rows) {
       const local = new Date(r.date).toLocaleString();
-
+      const header = `${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}`;
       lines.push(
-`${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}
-${mdBlock('Date', local)}${mdBlock('Verse', r.verse)}
+`${header}
+Date: ${local}
+Verse: ${r.verse || ''}
 
-${mdBlock('Themes', r.csvThemes)}${mdBlock('Quick Reflection', r.csvQuick)}${mdBlock('Extended Reflection', r.csvExtended)}${mdBlock('Alignment', r.csvAlign)}${mdBlock('Prayer', r.csvPrayer)}
+Themes: ${r.csvThemes || ''}
+Quick Reflection: ${r.csvQuick || ''}
+Extended Reflection: ${r.csvExtended || ''}
+Alignment: ${r.csvAlign || ''}
+Prayer: ${r.csvPrayer || ''}
 
-${mdBlock('My Themes', r.themes)}${mdBlock('My Reflection', r.reflection)}${mdBlock('Source', r.sourceType)}${mdBlock('Translation', r.translation)}
+My Themes: ${r.themes || ''}
+My Reflection: ${r.reflection || ''}
+Source: ${r.sourceType || ''}
+
 ---
 `
       );
     }
   }
 
-  const md = lines.join('');
-  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+  const txt = lines.join('');
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'bible_journey_journal.md';
+  a.download = 'bible_journey_journal.txt'; // .txt opens everywhere (and in Word)
   a.click();
   URL.revokeObjectURL(url);
 }
 
+// ---- Copy for Social (compact plain text to clipboard)
+function cleanSnippet(s, max) {
+  if (!s) return '';
+  const t = String(s).replace(/\s+/g, ' ').trim();
+  let out = t.slice(0, max);
+  out = out.replace(/[ ,;:!?.-]+$/,''); // trim trailing punctuation
+  return out;
+}
 
-// ---- Clear all entries ----
-function clearJournal() {
-  if (!confirm('This will permanently delete all saved journal entries on this device. Continue?')) return;
-  localStorage.removeItem('bj_journal');
-  renderJournal([]);
-  statusEl.textContent = 'Journal cleared on this device.';
+function exportSocial() {
+  const rows = JSON.parse(localStorage.getItem('bj_journal') || '[]');
+  if (!rows.length) { statusEl.textContent = 'No entries to share yet — save one first.'; return; }
+
+  const r = rows[0]; // most recent
+  const verse   = cleanSnippet(r.verse, 150);
+  const quick   = cleanSnippet(r.csvQuick || r.reflection, 100);
+  const trans   = r.translation ? ` ${r.translation}` : '';
+  const header  = `${r.reference || ''} — #${r.number}${trans}`;
+  const quote   = verse ? `“${verse}”` : '';
+  const tail    = quick ? `— ${quick}` : '';
+  let text = [header, quote, tail].filter(Boolean).join('\n');
+  if (text.length > 280) text = text.slice(0, 277) + '…';
+
+  navigator.clipboard?.writeText(text)
+    .then(() => { statusEl.textContent = 'Copied a compact snippet to your clipboard.'; })
+    .catch(() => {
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bible_journey_snippet.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+      statusEl.textContent = 'Saved a text snippet (clipboard was blocked).';
+    });
 }
 
 /* =========================
@@ -368,11 +397,13 @@ saveBtn?.addEventListener('click', saveEntry);
 const exportCsvBtn = document.getElementById('exportCsvBtn');
 exportCsvBtn?.addEventListener('click', exportCSV);
 
+// Reuse your existing "Export Markdown" button to export TXT instead
 const exportMdBtn = document.getElementById('exportMdBtn');
-exportMdBtn?.addEventListener('click', exportMarkdown);
+exportMdBtn?.addEventListener('click', exportPlainText);
 
-const clearBtn = document.getElementById('clearBtn');
-clearBtn?.addEventListener('click', clearJournal);
+// Add Copy for Social (if you added the button in HTML)
+const exportSocialBtn = document.getElementById('exportSocialBtn');
+exportSocialBtn?.addEventListener('click', exportSocial);
 
 // Preload current translation on page load + when changed
 (async () => { try { await ensureCsvLoaded(translationSelect?.value); } catch(e){ console.error(e); } })();
