@@ -40,6 +40,7 @@ function candidateFilesForTranslation(code) {
   }
   if (c === 'web') {
     return [
+      'Bible_Journey_Number_Map_Time_WEB.csv',     // <-- your file
       'FullNumbers_WithVerses_WEB.csv',
       'FullNumbers_WithVerses_WEB Time Complete.csv',
       'WEB.csv'
@@ -48,6 +49,7 @@ function candidateFilesForTranslation(code) {
   // KJV — support both spellings from earlier
   return ['Bible_Journey JKV Time complete.csv', 'Bible_Journey KJV Time Complete.csv', 'KJV.csv'];
 }
+
 
 async function fetchFirstAvailable(candidates) {
   let lastErr;
