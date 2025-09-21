@@ -343,7 +343,7 @@ function exportCSV() {
 
   const headers = [
     'Date','Number','Reference','Verse',
-    'CSV Themes','CSV Quick Reflection','CSV Extended Reflection','CSV Alignment','CSV Prayer',
+    'Themes','Quick Reflection','Extended Reflection','Alignment','Prayer',
     'My Themes','My Reflection','Source','Translation'
   ];
   const lines = [headers.join(',')];
