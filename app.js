@@ -1,4 +1,8 @@
-// ===== DOM refs =====
+/* =========================
+ * My Bible Journey – app.js (vanilla)
+ * ========================= */
+
+/* ---------- DOM refs ---------- */
 const statusEl    = document.getElementById('status');
 const resultEl    = document.getElementById('result');
 const refOut      = document.getElementById('refOut');
@@ -14,21 +18,26 @@ const alignOut    = document.getElementById('alignOut');
 const prayerOut   = document.getElementById('prayerOut');
 const translationSelect = document.getElementById('translation');
 
-// Buttons inside "My Journal"
+/* Buttons inside "My Journal" */
 const exportCsvBtn     = document.getElementById('exportCsvBtn');
 const exportMdBtn      = document.getElementById('exportMdBtn');       // Export Markdown
 const exportSocialBtn  = document.getElementById('exportSocialBtn');   // Copy for Social
 const clearBtn         = document.getElementById('clearBtn');
 
-saveBtn.disabled = true; // only enable after a successful resolve
+/* ---------- Flags / Config ---------- */
+saveBtn && (saveBtn.disabled = true);       // only enable after a successful resolve
+const ASSET_VER = 'build-9';                 // cache-busting for CSV assets
 
-// ===== Cache-busting =====
-const ASSET_VER = 'build-9';
+/* Storage keys: new + legacy (auto-migrate on load) */
+const STORAGE_KEY = 'bj_journal_v2';
+const LEGACY_KEYS = ['bj_journal'];
 
-// ===== CSV cache =====
+/* In-memory translation CSV cache */
 let translationCache = {}; // { asv: rows[], web: rows[], kjv: rows[] }
 
-// ----- Helper: normalize numbers so "001", "1 ", "1" all match
+/* ---------- Utilities ---------- */
+function setStatus(msg) { if (statusEl) statusEl.textContent = msg || ''; }
+
 function normalizeNumber(val) {
   const s = String(val ?? '').trim();
   if (s === '') return '';
@@ -37,7 +46,7 @@ function normalizeNumber(val) {
   return String(parseInt(digitsOnly, 10));
 }
 
-// ----- Helper: candidate filenames (only the ones you actually use)
+/* Candidate CSV filenames per translation */
 function candidateFilesForTranslation(code) {
   const c = (code || '').toLowerCase();
   if (c === 'asv') return ['FullNumbers_WithVerses_ASV Time Complete.csv'];
@@ -69,7 +78,7 @@ async function fetchFirstAvailable(candidates) {
   throw err;
 }
 
-// --- Robust CSV parser that handles commas, quotes, and newlines inside quotes
+/* Robust CSV parser */
 function parseCsvRaw(text) {
   const rows = [];
   let row = [];
@@ -107,93 +116,142 @@ function parseCsvText(text) {
   });
 }
 
-// ----- Load CSV for a translation
 async function ensureCsvLoaded(code) {
   const k = (code || 'kjv').toLowerCase();
   if (!translationCache[k]) {
-    statusEl.textContent = 'Loading translation data…';
+    setStatus('Loading translation data…');
     let payload;
     try {
       payload = await fetchFirstAvailable(candidateFilesForTranslation(k));
     } catch (e) {
       console.error(e);
-      statusEl.textContent = `Could not load ${k.toUpperCase()} CSV. Tried: ${e.tried?.join(' | ') || 'n/a'}.`;
+      setStatus(`Could not load ${k.toUpperCase()} CSV. Tried: ${e.tried?.join(' | ') || 'n/a'}.`);
       throw e;
     }
     translationCache[k] = parseCsvText(payload.text);
-    statusEl.textContent = `Loaded ${translationCache[k].length} rows from "${payload.name}".`;
+    setStatus(`Loaded ${translationCache[k].length} rows from "${payload.name}".`);
   }
   return translationCache[k];
 }
 
-// ----- Core lookup
+/* ---------- Verse Lookup ---------- */
 async function getVerseForNumber(number) {
   const code = (translationSelect?.value || 'kjv').toLowerCase();
   const rows = await ensureCsvLoaded(code);
-
   const target = normalizeNumber(number);
-  const hit = rows.find(r => normalizeNumber(r['number']) === target);
+
+  // Header name variants we support
+  const H = {
+    number: 'number',
+    reference: 'reference',
+    verse_web: 'verse_text (web)',
+    verse_kjv: 'verse_text (kjv)',
+    verse_asv: 'verse_text (asv)',
+    verse_fbv: 'verse_text (fbv)',
+    themes: 'themes',
+    quick: 'quick reflection',
+    extended: 'extended reflection',
+    align: 'alignment',
+    prayer: 'prayer'
+  };
+
+  const hit = rows.find(r => normalizeNumber(r[H.number]) === target);
   if (!hit) {
     return { ref: 'Not found', text: 'No verse text found for this number in the selected translation.',
              themes: '', quick: '', extended: '', align: '', prayer: '' };
   }
 
-  const ref = hit['reference'] || '';
-  const text =
-    hit['verse_text (web)'] ||
-    hit['verse_text (kjv)'] ||
-    hit['verse_text (asv)'] ||
-    hit['verse_text (fbv)'] || '';
+  const ref = hit[H.reference] || '';
+  const text = hit[H.verse_web] || hit[H.verse_kjv] || hit[H.verse_asv] || hit[H.verse_fbv] || '';
 
   return {
     ref,
     text,
-    themes:   hit['themes'] || '',
-    quick:    hit['quick reflection'] || '',
-    extended: hit['extended reflection'] || '',
-    align:    hit['alignment'] || '',
-    prayer:   hit['prayer'] || ''
+    themes:   hit[H.themes]   || '',
+    quick:    hit[H.quick]    || '',
+    extended: hit[H.extended] || '',
+    align:    hit[H.align]    || '',
+    prayer:   hit[H.prayer]   || ''
   };
 }
 
-// ===== Main resolve flow =====
+/* ---------- Resolve flow ---------- */
 async function resolveNumber() {
-  const nRaw = numInput.value;
+  const nRaw = numInput?.value;
   const n = normalizeNumber(nRaw);
-  if (!n) { statusEl.textContent = 'Enter a number (digits only).'; return; }
+  if (!n) { setStatus('Enter a number (digits only).'); return; }
 
-  statusEl.textContent = 'Resolving…';
-  resultEl.classList.remove('hidden');
-  refOut.textContent = ''; verseText.textContent = '…';
-  themesOut.textContent = ''; quickOut.textContent = '';
-  extendedOut.textContent = ''; alignOut.textContent = ''; prayerOut.textContent = '';
+  setStatus('Resolving…');
+  resultEl?.classList.remove('hidden');
+  if (refOut) refOut.textContent = '';
+  if (verseText) verseText.textContent = '…';
+  if (themesOut) themesOut.textContent = '';
+  if (quickOut) quickOut.textContent = '';
+  if (extendedOut) extendedOut.textContent = '';
+  if (alignOut) alignOut.textContent = '';
+  if (prayerOut) prayerOut.textContent = '';
 
   try {
     const { ref, text, themes, quick, extended, align, prayer } = await getVerseForNumber(n);
-    refOut.textContent = ref; verseText.textContent = text;
-    themesOut.textContent = themes; quickOut.textContent = quick;
-    extendedOut.textContent = extended; alignOut.textContent = align; prayerOut.textContent = prayer;
+    if (refOut) refOut.textContent = ref;
+    if (verseText) verseText.textContent = text;
+    if (themesOut) themesOut.textContent = themes;
+    if (quickOut) quickOut.textContent = quick;
+    if (extendedOut) extendedOut.textContent = extended;
+    if (alignOut) alignOut.textContent = align;
+    if (prayerOut) prayerOut.textContent = prayer;
 
     const ok = Boolean(text && text.trim());
-    statusEl.textContent = ok ? '' : 'No verse text found.';
-    saveBtn.disabled = !ok;
+    setStatus(ok ? '' : 'No verse text found.');
+    if (saveBtn) saveBtn.disabled = !ok;
   } catch (e) {
     console.error(e);
-    statusEl.textContent = 'Error loading verse. Check file names and headers.';
-    verseText.textContent = ''; saveBtn.disabled = true;
+    setStatus('Error loading verse. Check file names and headers.');
+    if (verseText) verseText.textContent = '';
+    if (saveBtn) saveBtn.disabled = true;
   }
 }
 
 /* =========================
  *  Journal (LocalStorage)
  * ========================= */
+function migrateLegacy() {
+  try {
+    const current = localStorage.getItem(STORAGE_KEY);
+    if (current) return; // already on v2
+    for (const key of LEGACY_KEYS) {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        localStorage.setItem(STORAGE_KEY, raw);
+        // Do NOT delete legacy automatically; user may rely on it in old builds
+        break;
+      }
+    }
+  } catch {}
+}
+
+function getJournal() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY) || '[]';
+    return Array.isArray(JSON.parse(raw)) ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function setJournal(list) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list || []));
+  } catch {}
+}
+
 function loadJournal() {
-  const raw = localStorage.getItem('bj_journal') || '[]';
-  const list = JSON.parse(raw);
-  renderJournal(list);
+  migrateLegacy();
+  renderJournal(getJournal());
 }
 
 function renderJournal(list) {
+  if (!journalList) return;
   journalList.innerHTML = '';
   if (!list.length) { journalList.innerHTML = '<p class="muted">No entries yet.</p>'; return; }
   for (const item of list) {
@@ -218,11 +276,11 @@ function renderJournal(list) {
 }
 
 async function saveEntry() {
-  const nRaw = numInput.value;
+  const nRaw = numInput?.value;
   const n = normalizeNumber(nRaw);
-  let ref = (refOut.textContent || '').trim();
-  let verse = (verseText.textContent || '').trim();
-  if (!n) { statusEl.textContent = 'Enter a number first.'; return; }
+  let ref = (refOut?.textContent || '').trim();
+  let verse = (verseText?.textContent || '').trim();
+  if (!n) { setStatus('Enter a number first.'); return; }
 
   let resolved;
   try {
@@ -232,8 +290,9 @@ async function saveEntry() {
   } catch (e) { console.error(e); }
 
   if (!ref || !verse) {
-    statusEl.textContent = 'Resolve the number first (no verse text available).';
-    saveBtn.disabled = true; return;
+    setStatus('Resolve the number first (no verse text available).');
+    if (saveBtn) saveBtn.disabled = true; 
+    return;
   }
 
   const myThemes = document.getElementById('themes')?.value.trim() || '';
@@ -241,8 +300,7 @@ async function saveEntry() {
   const src = [...document.querySelectorAll('input[name="sourceType"]')].find(r => r.checked)?.value || 'Manual';
   const translation = (translationSelect?.value || '').toUpperCase();
 
-  const raw = localStorage.getItem('bj_journal') || '[]';
-  const list = JSON.parse(raw);
+  const list = getJournal();
   list.unshift({
     date: new Date().toISOString(),
     number: n,
@@ -263,12 +321,12 @@ async function saveEntry() {
     sourceType: src,
     translation
   });
-  localStorage.setItem('bj_journal', JSON.stringify(list));
+  setJournal(list);
   renderJournal(list);
-  statusEl.textContent = 'Saved to Journal (local on this device).';
+  setStatus('Saved to Journal (local on this device).');
 }
 
-// ---- CSV export (Windows-friendly with BOM) ----
+/* ---------- CSV export (BOM for Excel) ---------- */
 function toCsvValue(s) {
   if (s == null) return '';
   const t = String(s).replace(/"/g, '""');
@@ -276,8 +334,7 @@ function toCsvValue(s) {
 }
 
 function exportCSV() {
-  const raw  = localStorage.getItem('bj_journal') || '[]';
-  const rows = JSON.parse(raw);
+  const rows = getJournal();
 
   const headers = [
     'Date','Number','Reference','Verse',
@@ -315,15 +372,14 @@ function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
-// ---- Markdown export (bold labels, no '---' separators), saves .md
+/* ---------- Markdown export (bold labels, no '---') ---------- */
 function mdBlock(label, val) {
   const v = (val || '').trim();
   return v ? `**${label}:** ${v}\n` : '';
 }
 
 function exportMarkdown() {
-  const rows = JSON.parse(localStorage.getItem('bj_journal') || '[]');
-
+  const rows = getJournal();
   const lines = ['# My Bible Journey Journal\n\n'];
 
   if (!rows.length) {
@@ -340,8 +396,7 @@ ${mdBlock('Themes', r.csvThemes)}${mdBlock('Quick Reflection', r.csvQuick)}${mdB
 ${mdBlock('My Themes', r.themes)}${mdBlock('My Reflection', r.reflection)}${mdBlock('Source', r.sourceType)}${mdBlock('Translation', r.translation)}
 `
       );
-      // No '---' divider; entries are separated by a blank line
-      lines.push('\n');
+      lines.push('\n'); // blank line between entries
     }
   }
 
@@ -355,11 +410,11 @@ ${mdBlock('My Themes', r.themes)}${mdBlock('My Reflection', r.reflection)}${mdBl
   URL.revokeObjectURL(url);
 }
 
-// ---- Copy for Social (copy ALL entries, plain text, no length limit)
+/* ---------- Copy for Social (all entries, plain text) ---------- */
 function exportSocial() {
-  const rows = JSON.parse(localStorage.getItem('bj_journal') || '[]');
+  const rows = getJournal();
   if (!rows.length) {
-    statusEl.textContent = 'No entries to share yet — save one first.';
+    setStatus('No entries to share yet — save one first.');
     return;
   }
 
@@ -388,8 +443,8 @@ Source: ${r.sourceType || ''}
   }
 
   const text = out.join('\n');
-  navigator.clipboard?.writeText(text)
-    .then(() => { statusEl.textContent = 'Copied all journal entries to your clipboard.'; })
+  (navigator.clipboard?.writeText(text))
+    .then(() => setStatus('Copied all journal entries to your clipboard.'))
     .catch(() => {
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -398,16 +453,22 @@ Source: ${r.sourceType || ''}
       a.download = 'bible_journey_all_entries.txt';
       a.click();
       URL.revokeObjectURL(url);
-      statusEl.textContent = 'Saved all entries as a text file (clipboard was blocked).';
+      setStatus('Saved all entries as a text file (clipboard was blocked).');
     });
 }
 
-// ---- Clear all entries ----
+/* ---------- Clear all entries (robust) ---------- */
 function clearJournal() {
   if (!confirm('This will permanently delete all saved journal entries on this device. Continue?')) return;
-  localStorage.removeItem('bj_journal');
+
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    // also clear legacy key(s) so older builds don’t rehydrate right away
+    for (const key of LEGACY_KEYS) localStorage.removeItem(key);
+  } catch {}
+
   renderJournal([]);
-  statusEl.textContent = 'Journal cleared on this device.';
+  setStatus('Journal cleared on this device.');
 }
 
 /* =========================
@@ -421,13 +482,20 @@ exportMdBtn?.addEventListener('click', exportMarkdown);
 exportSocialBtn?.addEventListener('click', exportSocial);
 clearBtn?.addEventListener('click', clearJournal);
 
-// Preload current translation on page load + when changed
-(async () => { try { await ensureCsvLoaded(translationSelect?.value); } catch(e){ console.error(e); } })();
+/* Preload current translation on page load + when changed */
+(async () => {
+  try { await ensureCsvLoaded(translationSelect?.value); } catch (e) { console.error(e); }
+})();
 translationSelect?.addEventListener('change', async () => {
-  statusEl.textContent = '';
-  try { await ensureCsvLoaded(translationSelect.value); } catch(e){ console.error(e); }
-  if (!resultEl.classList.contains('hidden')) resolveNumber();
+  setStatus('');
+  try { await ensureCsvLoaded(translationSelect.value); } catch (e) { console.error(e); }
+  if (!resultEl?.classList?.contains('hidden')) resolveNumber();
 });
 
-// Init journal
+/* Init journal */
 loadJournal();
+
+/* Optional: Enter to resolve */
+numInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') resolveNumber();
+});
