@@ -312,39 +312,28 @@ function exportCSV() {
 // ---- Markdown export (nice for UpNote/Notion/Obsidian)
 function mdBlock(label, val) {
   const v = (val || '').trim();
-  return v ? `**${label}:** ${v}  \n` : '';
+  return v ? `**${label}:** ${v}\n` : '';
 }
 
 function exportMarkdown() {
   const raw  = localStorage.getItem('bj_journal') || '[]';
   const rows = JSON.parse(raw);
 
-  const lines = ['# My Bible Journey Journal\n\n'];
+  const lines = ['# My Bible Journey Journal\n'];
 
   if (!rows.length) {
-    lines.push('No entries yet. Use “Save Entry” in My Journal, then export again.\n');
+    lines.push('_No entries yet. Use **Save Entry** in My Journal, then export again._\n');
   } else {
     for (const r of rows) {
       const local = new Date(r.date).toLocaleString();
 
-      // Entry title line (no asterisks anywhere)
-      const title = `${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}`;
-
       lines.push(
-`## ${title}
-Date: ${local}
-Verse: ${r.verse || ''}
+`${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}
+${mdBlock('Date', local)}${mdBlock('Verse', r.verse)}
 
-Themes: ${r.csvThemes || ''}
-Quick Reflection: ${r.csvQuick || ''}
-Extended Reflection: ${r.csvExtended || ''}
-Alignment: ${r.csvAlign || ''}
-Prayer: ${r.csvPrayer || ''}
+${mdBlock('Themes', r.csvThemes)}${mdBlock('Quick Reflection', r.csvQuick)}${mdBlock('Extended Reflection', r.csvExtended)}${mdBlock('Alignment', r.csvAlign)}${mdBlock('Prayer', r.csvPrayer)}
 
-My Themes: ${r.themes || ''}
-My Reflection: ${r.reflection || ''}
-Source: ${r.sourceType || ''}
-
+${mdBlock('My Themes', r.themes)}${mdBlock('My Reflection', r.reflection)}${mdBlock('Source', r.sourceType)}${mdBlock('Translation', r.translation)}
 ---
 `
       );
