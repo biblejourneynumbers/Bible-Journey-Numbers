@@ -72,7 +72,13 @@ function splitCSV(line) {
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (ch === '"') {
-      inQuotes = !inQuotes;
+      // If we're in quotes and see a doubled quote, treat it as a literal quote
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"';
+        i++; // skip the next quote
+      } else {
+        inQuotes = !inQuotes; // toggle quoted state
+      }
     } else if (ch === ',' && !inQuotes) {
       out.push(cur);
       cur = '';
@@ -83,6 +89,7 @@ function splitCSV(line) {
   out.push(cur);
   return out;
 }
+
 
 function parseCsvText(text) {
   const lines = text.split(/\r?\n/).filter(Boolean);
