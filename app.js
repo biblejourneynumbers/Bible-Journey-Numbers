@@ -470,7 +470,8 @@ function clearJournal() {
 resolveBtn?.addEventListener('click', resolveNumber);
 saveBtn?.addEventListener('click', saveEntry);
 exportCsvBtn?.addEventListener('click', exportCSV);
-exportMdBtn?.addEventListener('click', exportMarkdown);
+// exportMdBtn?.addEventListener('click', exportMarkdown);
+exportMdBtn?.addEventListener('click', exportTextPlain);
 exportSocialBtn?.addEventListener('click', exportSocial);
 clearBtn?.addEventListener('click', clearJournal);
 
