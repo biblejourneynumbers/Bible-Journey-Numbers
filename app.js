@@ -245,17 +245,18 @@ function renderJournal(list) {
       <strong>${dt}</strong> — #${item.number}${item.translation ? ' (' + item.translation + ')' : ''}<br>
       <em>Ref:</em> ${item.reference || ''}<br>
       <em>Verse:</em> ${item.verse || ''}<br>
-      <em>CSV Themes:</em> ${item.csvThemes || ''}<br>
-      <em>CSV Quick:</em> ${item.csvQuick || ''}<br>
-      <em>CSV Extended:</em> ${item.csvExtended || ''}<br>
-      <em>CSV Alignment:</em> ${item.csvAlign || ''}<br>
-      <em>CSV Prayer:</em> ${item.csvPrayer || ''}<br>
+      <em>Themes:</em> ${item.csvThemes || ''}<br>
+      <em>Quick Reflection:</em> ${item.csvQuick || ''}<br>
+      <em>Extended Reflection:</em> ${item.csvExtended || ''}<br>
+      <em>Alignment:</em> ${item.csvAlign || ''}<br>
+      <em>Prayer:</em> ${item.csvPrayer || ''}<br>
       <em>My Themes:</em> ${item.themes || ''}<br>
       <em>My Reflection:</em> ${item.reflection || ''}
     `;
     journalList.appendChild(div);
   }
 }
+
 
 async function saveEntry() {
   const nRaw = numInput.value;
@@ -367,7 +368,7 @@ function exportCSV() {
     ].join(','));
   }
 
-  const csv = '\uFEFF' + lines.join('\r\n'); // BOM for Excel
+  const csv = '\uFEFF' + lines.join('\r\n'); // Excel-friendly
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -376,6 +377,7 @@ function exportCSV() {
   a.click();
   URL.revokeObjectURL(url);
 }
+
 
 // ---- Clear all entries ----
 function clearJournal() {
