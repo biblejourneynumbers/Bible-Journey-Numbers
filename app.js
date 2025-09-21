@@ -18,7 +18,7 @@ const translationSelect = document.getElementById('translation');
 saveBtn.disabled = true; // only enable after a successful resolve
 
 // ===== Cache-busting =====
-const ASSET_VER = 'build-5';
+const ASSET_VER = 'build-6';
 
 // ===== CSV cache =====
 let translationCache = {}; // { asv: rows[], web: rows[], kjv: rows[] }
@@ -39,12 +39,11 @@ function candidateFilesForTranslation(code) {
     return ['FullNumbers_WithVerses_ASV Time Complete.csv'];
   }
   if (c === 'web') {
-    return ['Bible_Journey_Number_Map_Time_WEB.csv'];
+    return ['Bible_Journey_Number_Map_Time_WEB.csv']; // the one you actually have
   }
-  // KJV — support both spellings from earlier
+  // KJV (keep both spellings you have in the repo)
   return ['Bible_Journey JKV Time complete.csv', 'Bible_Journey KJV Time Complete.csv'];
 }
-
 
 async function fetchFirstAvailable(candidates) {
   let lastErr;
