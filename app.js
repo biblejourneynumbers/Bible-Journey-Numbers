@@ -36,18 +36,13 @@ function normalizeNumber(val) {
 function candidateFilesForTranslation(code) {
   const c = (code || '').toLowerCase();
   if (c === 'asv') {
-    return ['FullNumbers_WithVerses_ASV Time Complete.csv', 'ASV.csv'];
+    return ['FullNumbers_WithVerses_ASV Time Complete.csv'];
   }
   if (c === 'web') {
-    return [
-      'Bible_Journey_Number_Map_Time_WEB.csv',     // <-- your file
-      'FullNumbers_WithVerses_WEB.csv',
-      'FullNumbers_WithVerses_WEB Time Complete.csv',
-      'WEB.csv'
-    ];
+    return ['Bible_Journey_Number_Map_Time_WEB.csv'];
   }
   // KJV — support both spellings from earlier
-  return ['Bible_Journey JKV Time complete.csv', 'Bible_Journey KJV Time Complete.csv', 'KJV.csv'];
+  return ['Bible_Journey JKV Time complete.csv', 'Bible_Journey KJV Time Complete.csv'];
 }
 
 
