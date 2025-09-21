@@ -6,7 +6,6 @@ const verseText   = document.getElementById('verseText');
 const numInput    = document.getElementById('numInput');
 const resolveBtn  = document.getElementById('resolveBtn');
 const saveBtn     = document.getElementById('saveBtn');
-const exportBtn   = document.getElementById('exportBtn');
 const journalList = document.getElementById('journalList');
 const themesOut   = document.getElementById('themesOut');
 const quickOut    = document.getElementById('quickOut');
@@ -18,7 +17,7 @@ const translationSelect = document.getElementById('translation');
 saveBtn.disabled = true; // only enable after a successful resolve
 
 // ===== Cache-busting =====
-const ASSET_VER = 'build-6';
+const ASSET_VER = 'build-7';
 
 // ===== CSV cache =====
 let translationCache = {}; // { asv: rows[], web: rows[], kjv: rows[] }
@@ -32,16 +31,12 @@ function normalizeNumber(val) {
   return String(parseInt(digitsOnly, 10));
 }
 
-// ----- Helper: candidate filenames (supports multiple names so you don’t have to)
+// ----- Helper: candidate filenames (only the ones you actually use)
 function candidateFilesForTranslation(code) {
   const c = (code || '').toLowerCase();
-  if (c === 'asv') {
-    return ['FullNumbers_WithVerses_ASV Time Complete.csv'];
-  }
-  if (c === 'web') {
-    return ['Bible_Journey_Number_Map_Time_WEB.csv']; // the one you actually have
-  }
-  // KJV (keep both spellings you have in the repo)
+  if (c === 'asv') return ['FullNumbers_WithVerses_ASV Time Complete.csv'];
+  if (c === 'web') return ['Bible_Journey_Number_Map_Time_WEB.csv'];
+  // KJV (keep both spellings present in repo)
   return ['Bible_Journey JKV Time complete.csv', 'Bible_Journey KJV Time Complete.csv'];
 }
 
@@ -60,7 +55,6 @@ async function fetchFirstAvailable(candidates) {
       }
     } catch (e) {
       lastErr = e;
-      // try next
     }
   }
   const err = new Error('No CSV found');
@@ -80,44 +74,25 @@ function parseCsvRaw(text) {
     const ch = text[i];
 
     if (ch === '"') {
-      // double-quote inside quoted field -> literal quote
-      if (inQuotes && text[i + 1] === '"') {
-        field += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
+      if (inQuotes && text[i + 1] === '"') { field += '"'; i++; }
+      else { inQuotes = !inQuotes; }
     } else if (ch === ',' && !inQuotes) {
-      row.push(field);
-      field = '';
+      row.push(field); field = '';
     } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
-      // end of record (handle CRLF as one)
       if (ch === '\r' && text[i + 1] === '\n') i++;
-      row.push(field);
-      rows.push(row);
-      row = [];
-      field = '';
+      row.push(field); rows.push(row);
+      row = []; field = '';
     } else {
       field += ch;
     }
   }
-
-  // push last field/row
-  if (field.length > 0 || row.length > 0) {
-    row.push(field);
-    rows.push(row);
-  }
-
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
   return rows;
 }
 
 function parseCsvText(text) {
-  const matrix = parseCsvRaw(text)
-    // drop blank rows
-    .filter(r => r && r.some(c => String(c).trim() !== ''));
-
+  const matrix = parseCsvRaw(text).filter(r => r && r.some(c => String(c).trim() !== ''));
   if (!matrix.length) return [];
-
   const headers = matrix.shift().map(h => String(h).trim().toLowerCase());
   return matrix.map(cells => {
     const obj = {};
@@ -153,21 +128,16 @@ async function getVerseForNumber(number) {
   const target = normalizeNumber(number);
   const hit = rows.find(r => normalizeNumber(r['number']) === target);
   if (!hit) {
-    return {
-      ref: 'Not found',
-      text: 'No verse text found for this number in the selected translation.',
-      themes: '', quick: '', extended: '', align: '', prayer: ''
-    };
+    return { ref: 'Not found', text: 'No verse text found for this number in the selected translation.',
+             themes: '', quick: '', extended: '', align: '', prayer: '' };
   }
 
-  // Reference + Verse Text (checks translation-specific column first)
   const ref = hit['reference'] || '';
   const text =
     hit['verse_text (web)'] ||
     hit['verse_text (kjv)'] ||
     hit['verse_text (asv)'] ||
-    hit['verse_text (fbv)'] || // harmless if missing
-    '';
+    hit['verse_text (fbv)'] || '';
 
   return {
     ref,
@@ -184,31 +154,19 @@ async function getVerseForNumber(number) {
 async function resolveNumber() {
   const nRaw = numInput.value;
   const n = normalizeNumber(nRaw);
-  if (!n) {
-    statusEl.textContent = 'Enter a number (digits only).';
-    return;
-  }
+  if (!n) { statusEl.textContent = 'Enter a number (digits only).'; return; }
 
   statusEl.textContent = 'Resolving…';
   resultEl.classList.remove('hidden');
-  refOut.textContent      = '';
-  verseText.textContent   = '…';
-  themesOut.textContent   = '';
-  quickOut.textContent    = '';
-  extendedOut.textContent = '';
-  alignOut.textContent    = '';
-  prayerOut.textContent   = '';
+  refOut.textContent = ''; verseText.textContent = '…';
+  themesOut.textContent = ''; quickOut.textContent = '';
+  extendedOut.textContent = ''; alignOut.textContent = ''; prayerOut.textContent = '';
 
   try {
     const { ref, text, themes, quick, extended, align, prayer } = await getVerseForNumber(n);
-
-    refOut.textContent      = ref;
-    verseText.textContent   = text;
-    themesOut.textContent   = themes;
-    quickOut.textContent    = quick;
-    extendedOut.textContent = extended;
-    alignOut.textContent    = align;
-    prayerOut.textContent   = prayer;
+    refOut.textContent = ref; verseText.textContent = text;
+    themesOut.textContent = themes; quickOut.textContent = quick;
+    extendedOut.textContent = extended; alignOut.textContent = align; prayerOut.textContent = prayer;
 
     const ok = Boolean(text && text.trim());
     statusEl.textContent = ok ? '' : 'No verse text found.';
@@ -216,8 +174,7 @@ async function resolveNumber() {
   } catch (e) {
     console.error(e);
     statusEl.textContent = 'Error loading verse. Check file names and headers.';
-    verseText.textContent = '';
-    saveBtn.disabled = true;
+    verseText.textContent = ''; saveBtn.disabled = true;
   }
 }
 
@@ -232,10 +189,7 @@ function loadJournal() {
 
 function renderJournal(list) {
   journalList.innerHTML = '';
-  if (!list.length) {
-    journalList.innerHTML = '<p class="muted">No entries yet.</p>';
-    return;
-  }
+  if (!list.length) { journalList.innerHTML = '<p class="muted">No entries yet.</p>'; return; }
   for (const item of list) {
     const div = document.createElement('div');
     div.className = 'journal-item';
@@ -257,42 +211,31 @@ function renderJournal(list) {
   }
 }
 
-
 async function saveEntry() {
   const nRaw = numInput.value;
-  const n    = normalizeNumber(nRaw);
-  let ref    = (refOut.textContent || '').trim();
-  let verse  = (verseText.textContent || '').trim();
+  const n = normalizeNumber(nRaw);
+  let ref = (refOut.textContent || '').trim();
+  let verse = (verseText.textContent || '').trim();
+  if (!n) { statusEl.textContent = 'Enter a number first.'; return; }
 
-  if (!n) {
-    statusEl.textContent = 'Enter a number first.';
-    return;
-  }
-
-  // Ensure we have verse/reference and CSV fields
   let resolved;
   try {
     resolved = await getVerseForNumber(n);
-    if (resolved?.ref)   ref   = ref || resolved.ref;
-    if (resolved?.text)  verse = verse || resolved.text;
-  } catch (e) {
-    console.error(e);
-  }
+    if (resolved?.ref) ref = ref || resolved.ref;
+    if (resolved?.text) verse = verse || resolved.text;
+  } catch (e) { console.error(e); }
 
   if (!ref || !verse) {
     statusEl.textContent = 'Resolve the number first (no verse text available).';
-    saveBtn.disabled = true;
-    return;
+    saveBtn.disabled = true; return;
   }
 
-  // User inputs
-  const myThemes     = document.getElementById('themes')?.value.trim() || '';
+  const myThemes = document.getElementById('themes')?.value.trim() || '';
   const myReflection = document.getElementById('reflection')?.value.trim() || '';
-  const src = [...document.querySelectorAll('input[name="sourceType"]')]
-                .find(r => r.checked)?.value || 'Manual';
+  const src = [...document.querySelectorAll('input[name="sourceType"]')].find(r => r.checked)?.value || 'Manual';
   const translation = (translationSelect?.value || '').toUpperCase();
 
-  const raw  = localStorage.getItem('bj_journal') || '[]';
+  const raw = localStorage.getItem('bj_journal') || '[]';
   const list = JSON.parse(raw);
   list.unshift({
     date: new Date().toISOString(),
@@ -317,18 +260,6 @@ async function saveEntry() {
   localStorage.setItem('bj_journal', JSON.stringify(list));
   renderJournal(list);
   statusEl.textContent = 'Saved to Journal (local on this device).';
-}
-
-// ---- JSON export ----
-function exportJSON() {
-  const raw = localStorage.getItem('bj_journal') || '[]';
-  const blob = new Blob([raw], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'bible_journey_journal.json';
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 // ---- CSV export (Windows-friendly with BOM) ----
@@ -378,6 +309,46 @@ function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
+// ---- Markdown export (nice for UpNote/Notion/Obsidian)
+function mdBlock(label, val) {
+  const v = (val || '').trim();
+  return v ? `**${label}:** ${v}  \n` : '';
+}
+
+function exportMarkdown() {
+  const raw  = localStorage.getItem('bj_journal') || '[]';
+  const rows = JSON.parse(raw);
+  const lines = ['# My Bible Journey Journal\n'];
+
+  for (const r of rows) {
+    const local = new Date(r.date).toLocaleString();
+    lines.push(
+      mdBlock('Date', local) +
+      mdBlock('Number', r.number) +
+      mdBlock('Reference', r.reference) +
+      mdBlock('Verse', r.verse) + '\n' +
+      mdBlock('Themes', r.csvThemes) +
+      mdBlock('Quick Reflection', r.csvQuick) +
+      mdBlock('Extended Reflection', r.csvExtended) +
+      mdBlock('Alignment', r.csvAlign) +
+      mdBlock('Prayer', r.csvPrayer) + '\n' +
+      mdBlock('My Themes', r.themes) +
+      mdBlock('My Reflection', r.reflection) +
+      mdBlock('Source', r.sourceType) +
+      mdBlock('Translation', r.translation) +
+      '\n---\n'
+    );
+  }
+
+  const md = lines.join('');
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bible_journey_journal.md';
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 // ---- Clear all entries ----
 function clearJournal() {
@@ -392,10 +363,12 @@ function clearJournal() {
  * ========================= */
 resolveBtn?.addEventListener('click', resolveNumber);
 saveBtn?.addEventListener('click', saveEntry);
-exportBtn?.addEventListener('click', exportJSON);
 
 const exportCsvBtn = document.getElementById('exportCsvBtn');
 exportCsvBtn?.addEventListener('click', exportCSV);
+
+const exportMdBtn = document.getElementById('exportMdBtn');
+exportMdBtn?.addEventListener('click', exportMarkdown);
 
 const clearBtn = document.getElementById('clearBtn');
 clearBtn?.addEventListener('click', clearJournal);
