@@ -362,12 +362,7 @@ function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
-/* ---------- Markdown export (bold labels, no '---') ---------- */
-function mdBlock(label, val) {
-  const v = (val || '').trim();
-  return v ? `**${label}:** ${v}\n` : '';
-}
-
+/* ---------- Export Markdown-formatted TEXT (.txt) ---------- */
 function exportMarkdown() {
   const rows = getJournal();
   const lines = ['# My Bible Journey Journal\n\n'];
@@ -378,6 +373,10 @@ function exportMarkdown() {
     for (const r of rows) {
       const local = new Date(r.date).toLocaleString();
       const title = `${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}`;
+
+      const mdBlock = (label, val) => (val && String(val).trim())
+        ? `**${label}:** ${String(val).trim()}\n`
+        : '';
 
       lines.push(
 `${title}
@@ -390,15 +389,16 @@ ${mdBlock('My Themes', r.themes)}${mdBlock('My Reflection', r.reflection)}${mdBl
     }
   }
 
-  const md = lines.join('');
-  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+  const textOut = lines.join('');
+  const blob = new Blob([textOut], { type: 'text/plain;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'bible_journey_journal.md';
+  a.download = 'bible_journey_journal.txt';   // <- now .txt
   a.click();
   URL.revokeObjectURL(url);
 }
+
 
 /* ---------- Copy for Social (all entries, plain text) ---------- */
 function exportSocial() {
