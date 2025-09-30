@@ -408,7 +408,7 @@ function exportTextPlain() {
   URL.revokeObjectURL(url);
 }
 
-/* ---------- Copy for Social (robust, with mobile fallback) ---------- */
+/* ---------- Copy for Social (bling version with mobile fallback) ---------- */
 function exportSocial() {
   const rows = getJournal();
   if (!rows.length) { setStatus('No entries to share yet — save one first.'); return; }
@@ -442,14 +442,14 @@ function exportSocial() {
     const header = `${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}`;
     const lines = [header, `Date: ${dt}`];
 
-    if (include('verse'))        lines.push(`Verse: ${r.verse ?? ''}`);
-    if (include('themes'))       lines.push(`Themes: ${r.csvThemes ?? ''}`);
-    if (include('quick'))        lines.push(`Quick Reflection: ${r.csvQuick ?? ''}`);
-    if (include('extended'))     lines.push(`Extended Reflection: ${r.csvExtended ?? ''}`);
-    if (include('align'))        lines.push(`Alignment: ${r.csvAlign ?? ''}`);
-    if (include('prayer'))       lines.push(`Prayer: ${r.csvPrayer ?? ''}`);
-    if (include('mythemes'))     lines.push(`My Themes: ${r.themes ?? ''}`);
-    if (include('myreflection')) lines.push(`My Reflection: ${r.reflection ?? ''}`);
+    if (include('verse'))        lines.push(`📖 Verse: ${r.verse ?? ''}`);
+    if (include('themes'))       lines.push(`🎨 Themes: ${r.csvThemes ?? ''}`);
+    if (include('quick'))        lines.push(`💡 Quick Reflection: ${r.csvQuick ?? ''}`);
+    if (include('extended'))     lines.push(`🔍 Extended Reflection: ${r.csvExtended ?? ''}`);
+    if (include('align'))        lines.push(`✨ Alignment: ${r.csvAlign ?? ''}`);
+    if (include('prayer'))       lines.push(`🙏🏼 Prayer: ${r.csvPrayer ?? ''}`);
+    if (include('mythemes'))     lines.push(`🎨 My Themes: ${r.themes ?? ''}`);
+    if (include('myreflection')) lines.push(`💭 My Reflection: ${r.reflection ?? ''}`);
 
     lines.push('');
     return lines.join('\n');
