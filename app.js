@@ -408,36 +408,29 @@ function exportTextPlain() {
   URL.revokeObjectURL(url);
 }
 
-/* ---------- Copy for Social (robust, all categories) ---------- */
+/* ---------- Copy for Social (robust, with mobile fallback) ---------- */
 function exportSocial() {
   const rows = getJournal();
   if (!rows.length) { setStatus('No entries to share yet — save one first.'); return; }
 
   // Read selected checkboxes (if present)
   const cbs = [...document.querySelectorAll('input[name="copyField"]')];
-  let selected = cbs
-    .filter(cb => cb.checked)
-    .map(cb => String(cb.value || '').trim().toLowerCase());
+  let selected = cbs.filter(cb => cb.checked).map(cb => String(cb.value || '').trim().toLowerCase());
 
   // Normalize synonyms
   const normMap = {
-    alignment: 'align',
-    align: 'align',
+    alignment: 'align', align: 'align',
     verse: 'verse',
     themes: 'themes',
     prayer: 'prayer',
-    quick: 'quick',
-    'quick reflection': 'quick',
-    extended: 'extended',
-    'extended reflection': 'extended',
-    mythemes: 'mythemes',
-    'my themes': 'mythemes',
-    myreflection: 'myreflection',
-    'my reflection': 'myreflection',
+    quick: 'quick', 'quick reflection': 'quick',
+    extended: 'extended', 'extended reflection': 'extended',
+    mythemes: 'mythemes', 'my themes': 'mythemes',
+    myreflection: 'myreflection', 'my reflection': 'myreflection',
   };
   selected = selected.map(v => normMap[v] || v);
 
-  // Default to ALL if none selected or no checkbox group in DOM
+  // Default to ALL if none selected
   if (!selected.length) {
     selected = ['verse','themes','quick','extended','align','prayer','mythemes','myreflection'];
   }
@@ -449,34 +442,56 @@ function exportSocial() {
     const header = `${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}`;
     const lines = [header, `Date: ${dt}`];
 
-    if (include('themes'))       lines.push(`🎨 Themes: ${r.csvThemes ?? ''}`);
-if (include('quick'))        lines.push(`💡 Quick Reflection: ${r.csvQuick ?? ''}`);
-if (include('extended'))     lines.push(`🔍 Extended Reflection: ${r.csvExtended ?? ''}`);
-if (include('align'))        lines.push(`✨ Alignment: ${r.csvAlign ?? ''}`);
-if (include('prayer'))       lines.push(`🙏🏼 Prayer: ${r.csvPrayer ?? ''}`);
-if (include('mythemes'))     lines.push(`🎨 My Themes: ${r.themes ?? ''}`);
-if (include('myreflection')) lines.push(`📝 My Reflection: ${r.reflection ?? ''}`);
+    if (include('verse'))        lines.push(`Verse: ${r.verse ?? ''}`);
+    if (include('themes'))       lines.push(`Themes: ${r.csvThemes ?? ''}`);
+    if (include('quick'))        lines.push(`Quick Reflection: ${r.csvQuick ?? ''}`);
+    if (include('extended'))     lines.push(`Extended Reflection: ${r.csvExtended ?? ''}`);
+    if (include('align'))        lines.push(`Alignment: ${r.csvAlign ?? ''}`);
+    if (include('prayer'))       lines.push(`Prayer: ${r.csvPrayer ?? ''}`);
+    if (include('mythemes'))     lines.push(`My Themes: ${r.themes ?? ''}`);
+    if (include('myreflection')) lines.push(`My Reflection: ${r.reflection ?? ''}`);
 
-    lines.push(''); // blank line between entries
+    lines.push('');
     return lines.join('\n');
   });
 
   const text = out.join('\n');
-  navigator.clipboard?.writeText(text)
-    .then(() => setStatus('Copied selected fields from journal to your clipboard.'))
-    .catch(() => {
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'bible_journey_selected.txt';
-      a.click();
-      URL.revokeObjectURL(url);
-      setStatus('Saved selected fields as a text file (clipboard was blocked).');
-    });
+
+  // Try modern clipboard API first
+  navigator.clipboard?.writeText(text).then(() => {
+    setStatus('Copied selected fields from journal to your clipboard.');
+  }).catch(() => {
+    // Fallback: hidden textarea (works better on iOS Safari)
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const success = document.execCommand('copy');
+      document.body.removeChild(ta);
+
+      if (success) {
+        setStatus('Copied selected fields from journal (using fallback).');
+        return;
+      }
+    } catch (e) {
+      console.error('Textarea copy failed', e);
+    }
+
+    // Final fallback: download as .txt
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bible_journey_selected.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+    setStatus('Saved selected fields as a text file (clipboard was blocked).');
+  });
 }
-
-
 
 /* ---------- Clear all entries (robust + legacy wipe) ---------- */
 function clearJournal() {
