@@ -405,48 +405,57 @@ function exportTextPlain() {
   URL.revokeObjectURL(url);
 }
 
-/* ---------- Copy for Social (category-aware incl. My Themes/Reflection) ---------- */
+/* ---------- Copy for Social (robust, all categories) ---------- */
 function exportSocial() {
   const rows = getJournal();
   if (!rows.length) { setStatus('No entries to share yet — save one first.'); return; }
 
+  // Read selected checkboxes (if present)
   const cbs = [...document.querySelectorAll('input[name="copyField"]')];
-  let selected = cbs.filter(cb => cb.checked).map(cb => String(cb.value || '').toLowerCase());
+  let selected = cbs
+    .filter(cb => cb.checked)
+    .map(cb => String(cb.value || '').trim().toLowerCase());
 
-  const normalize = v => ({
+  // Normalize synonyms
+  const normMap = {
     alignment: 'align',
     align: 'align',
     verse: 'verse',
     themes: 'themes',
     prayer: 'prayer',
     quick: 'quick',
+    'quick reflection': 'quick',
     extended: 'extended',
-    mythemes: 'myThemes',
-    myreflection: 'myReflection'
-  }[v] || v);
-  selected = selected.map(normalize);
+    'extended reflection': 'extended',
+    mythemes: 'mythemes',
+    'my themes': 'mythemes',
+    myreflection: 'myreflection',
+    'my reflection': 'myreflection',
+  };
+  selected = selected.map(v => normMap[v] || v);
 
-  // Fallback to ALL if none selected or group missing
-  if (!selected.length)
-    selected = ['verse','themes','align','prayer','quick','extended','myThemes','myReflection'];
+  // Default to ALL if none selected or no checkbox group in DOM
+  if (!selected.length) {
+    selected = ['verse','themes','quick','extended','align','prayer','mythemes','myreflection'];
+  }
 
   const include = key => selected.includes(key);
 
   const out = rows.map(r => {
-    const local = new Date(r.date).toLocaleString();
+    const dt = new Date(r.date).toLocaleString();
     const header = `${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}`;
-    const lines = [header, `Date: ${local}`];
+    const lines = [header, `Date: ${dt}`];
 
-    if (include('verse'))    lines.push(`Verse: ${r.verse || ''}`);
-    if (include('themes'))   lines.push(`Themes: ${r.csvThemes || ''}`);
-    if (include('quick'))    lines.push(`Quick Reflection: ${r.csvQuick || ''}`);
-    if (include('extended')) lines.push(`Extended Reflection: ${r.csvExtended || ''}`);
-    if (include('align'))    lines.push(`Alignment: ${r.csvAlign || ''}`);
-    if (include('prayer'))   lines.push(`Prayer: ${r.csvPrayer || ''}`);
-    if (include('myThemes')) lines.push(`My Themes: ${r.themes || ''}`);
-    if (include('myReflection')) lines.push(`My Reflection: ${r.reflection || ''}`);
+    if (include('verse'))        lines.push(`Verse: ${r.verse ?? ''}`);
+    if (include('themes'))       lines.push(`Themes: ${r.csvThemes ?? ''}`);
+    if (include('quick'))        lines.push(`Quick Reflection: ${r.csvQuick ?? ''}`);
+    if (include('extended'))     lines.push(`Extended Reflection: ${r.csvExtended ?? ''}`);
+    if (include('align'))        lines.push(`Alignment: ${r.csvAlign ?? ''}`);
+    if (include('prayer'))       lines.push(`Prayer: ${r.csvPrayer ?? ''}`);
+    if (include('mythemes'))     lines.push(`My Themes: ${r.themes ?? ''}`);
+    if (include('myreflection')) lines.push(`My Reflection: ${r.reflection ?? ''}`);
 
-    lines.push('');
+    lines.push(''); // blank line between entries
     return lines.join('\n');
   });
 
@@ -464,6 +473,7 @@ function exportSocial() {
       setStatus('Saved selected fields as a text file (clipboard was blocked).');
     });
 }
+
 
 
 /* ---------- Clear all entries (robust + legacy wipe) ---------- */
