@@ -405,7 +405,7 @@ function exportTextPlain() {
   URL.revokeObjectURL(url);
 }
 
-/* ---------- Copy for Social (category-aware, robust fallback) ---------- */
+/* ---------- Copy for Social (category-aware incl. My Themes/Reflection) ---------- */
 function exportSocial() {
   const rows = getJournal();
   if (!rows.length) {
@@ -413,14 +413,22 @@ function exportSocial() {
     return;
   }
 
-  // Gather selected fields
+  // Gather selected fields from checkboxes (if present)
   const cbs = [...document.querySelectorAll('input[name="copyField"]')];
   let selected = cbs.filter(cb => cb.checked).map(cb => String(cb.value || '').toLowerCase());
 
-  // Normalize synonyms & fallback to ALL if missing/empty
-  const normalize = v => ({ alignment: 'align', align: 'align', verse: 'verse', themes: 'themes', prayer: 'prayer' }[v] || v);
+  // Normalize synonyms & fallback to ALL if none picked / group missing
+  const normalize = v => ({
+    alignment: 'align',
+    align: 'align',
+    verse: 'verse',
+    themes: 'themes',
+    prayer: 'prayer',
+    mythemes: 'myThemes',
+    myreflection: 'myReflection'
+  }[v] || v);
   selected = selected.map(normalize);
-  if (!selected.length) selected = ['verse', 'themes', 'align', 'prayer'];
+  if (!selected.length) selected = ['verse', 'themes', 'align', 'prayer', 'myThemes', 'myReflection'];
 
   const include = key => selected.includes(key);
 
@@ -429,10 +437,12 @@ function exportSocial() {
     const header = `${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}`;
     const lines = [header, `Date: ${local}`];
 
-    if (include('verse'))  lines.push(`Verse: ${r.verse || ''}`);
-    if (include('themes')) lines.push(`Themes: ${r.csvThemes || ''}`);
-    if (include('align'))  lines.push(`Alignment: ${r.csvAlign || ''}`);
-    if (include('prayer')) lines.push(`Prayer: ${r.csvPrayer || ''}`);
+    if (include('verse'))         lines.push(`Verse: ${r.verse || ''}`);
+    if (include('themes'))        lines.push(`Themes: ${r.csvThemes || ''}`);
+    if (include('align'))         lines.push(`Alignment: ${r.csvAlign || ''}`);
+    if (include('prayer'))        lines.push(`Prayer: ${r.csvPrayer || ''}`);
+    if (include('myThemes'))      lines.push(`My Themes: ${r.themes || ''}`);
+    if (include('myReflection'))  lines.push(`My Reflection: ${r.reflection || ''}`);
 
     lines.push(''); // blank line between entries
     return lines.join('\n');
@@ -452,6 +462,7 @@ function exportSocial() {
       setStatus('Saved selected fields as a text file (clipboard was blocked).');
     });
 }
+
 
 /* ---------- Clear all entries (robust + legacy wipe) ---------- */
 function clearJournal() {
