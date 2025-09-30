@@ -410,46 +410,45 @@ function exportTextPlain() {
 /* ---------- Copy for Social (all entries, plain text) ---------- */
 function exportSocial() {
   const rows = getJournal();
-  if (!rows.length) { setStatus('No entries to share yet — save one first.'); return; }
+  if (!rows.length) {
+    setStatus('No entries to share yet — save one first.');
+    return;
+  }
+
+  // Collect selected fields
+  const selected = [...document.querySelectorAll('input[name="copyField"]:checked')]
+                   .map(cb => cb.value);
 
   const out = [];
   for (const r of rows) {
     const local = new Date(r.date).toLocaleString();
     const header = `${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}`;
+    const lines = [header, `Date: ${local}`];
 
-    out.push(
-`${header}
-Date: ${local}
-Verse: ${r.verse || ''}
+    if (selected.includes('verse'))   lines.push(`Verse: ${r.verse || ''}`);
+    if (selected.includes('themes'))  lines.push(`Themes: ${r.csvThemes || ''}`);
+    if (selected.includes('align'))   lines.push(`Alignment: ${r.csvAlign || ''}`);
+    if (selected.includes('prayer'))  lines.push(`Prayer: ${r.csvPrayer || ''}`);
 
-Themes: ${r.csvThemes || ''}
-Quick Reflection: ${r.csvQuick || ''}
-Extended Reflection: ${r.csvExtended || ''}
-Alignment: ${r.csvAlign || ''}
-Prayer: ${r.csvPrayer || ''}
-
-My Themes: ${r.themes || ''}
-My Reflection: ${r.reflection || ''}
-Source: ${r.sourceType || ''}
-
-`
-    );
+    lines.push(''); // blank line between entries
+    out.push(lines.join('\n'));
   }
 
   const text = out.join('\n');
-  (navigator.clipboard?.writeText(text))
-    .then(() => setStatus('Copied all journal entries to your clipboard.'))
+  navigator.clipboard?.writeText(text)
+    .then(() => setStatus('Copied selected fields from journal to your clipboard.'))
     .catch(() => {
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'bible_journey_all_entries.txt';
+      a.download = 'bible_journey_selected.txt';
       a.click();
       URL.revokeObjectURL(url);
-      setStatus('Saved all entries as a text file (clipboard was blocked).');
+      setStatus('Saved selected fields as a text file (clipboard was blocked).');
     });
 }
+
 
 /* ---------- Clear all entries (robust + legacy wipe) ---------- */
 function clearJournal() {
