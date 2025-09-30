@@ -243,7 +243,10 @@ function loadJournal() {
 function renderJournal(list) {
   if (!journalList) return;
   journalList.innerHTML = '';
-  if (!list.length) { journalList.innerHTML = '<p class="muted">No entries yet.</p>'; return; }
+  if (!list.length) {
+    journalList.innerHTML = '<p class="muted">No entries yet.</p>';
+    return;
+  }
 
   for (const item of list) {
     const div = document.createElement('div');
@@ -253,12 +256,12 @@ function renderJournal(list) {
     div.innerHTML = `
       <strong>${dt}</strong> — #${item.number}${item.translation ? ' (' + item.translation + ')' : ''}<br>
       <em>Ref:</em> ${item.reference || ''}<br>
-      <em>Verse:</em> ${item.verse || ''}<br>
-      <em>Themes:</em> ${item.csvThemes || ''}<br>
-      <em>Quick Reflection:</em> ${item.csvQuick || ''}<br>
-      <em>Extended Reflection:</em> ${item.csvExtended || ''}<br>
-      <em>Alignment:</em> ${item.csvAlign || ''}<br>
-      <em>Prayer:</em> ${item.csvPrayer || ''}<br>
+      <em>📖 Verse:</em> ${item.verse || ''}<br>
+      <em>🎨 Themes:</em> ${item.csvThemes || ''}<br>
+      <em>💡 Quick Reflection:</em> ${item.csvQuick || ''}<br>
+      <em>🔍 Extended Reflection:</em> ${item.csvExtended || ''}<br>
+      <em>✨ Alignment:</em> ${item.csvAlign || ''}<br>
+      <em>🙏🏼 Prayer:</em> ${item.csvPrayer || ''}<br>
       <em>My Themes:</em> ${item.themes || ''}<br>
       <em>My Reflection:</em> ${item.reflection || ''}
     `;
