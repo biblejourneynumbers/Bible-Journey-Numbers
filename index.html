@@ -118,28 +118,23 @@
         <textarea id="reflection" rows="3" placeholder="What does this verse mean to me today?"></textarea>
       </div>
 
-      <div class="radio-row">
-        <label>Source:</label>
-        <label><input type="radio" name="sourceType" value="Manual" checked> Manual</label>
-        <label><input type="radio" name="sourceType" value="Watch"> Watch</label>
-      </div>
+     <div class="input-row">
+  <button id="saveBtn">Save Entry</button>
+  <button id="exportSocialBtn" class="secondary">Copy for Social</button>
+  <button id="exportMdBtn" class="secondary">Export Text</button>
+  <button id="exportCsvBtn" class="secondary">Export CSV</button>
+  <button id="clearBtn" class="secondary">Clear Journal</button>
+</div>
 
-      <div class="input-row">
-        <button id="saveBtn">Save Entry</button>
-        <button id="exportSocialBtn" class="secondary">Copy for Social</button>
-
-<div class="muted" style="margin-top:8px; font-size:13px;">
+<div class="muted" style="margin:8px 0 12px 0; font-size:13px;">
   <strong>Include in Copy:</strong><br>
   <label><input type="checkbox" name="copyField" value="verse" checked> Verse</label>
   <label><input type="checkbox" name="copyField" value="themes" checked> Themes</label>
   <label><input type="checkbox" name="copyField" value="align" checked> Alignment</label>
   <label><input type="checkbox" name="copyField" value="prayer" checked> Prayer</label>
+  <label><input type="checkbox" name="copyField" value="myThemes"> My Themes</label>
+  <label><input type="checkbox" name="copyField" value="myReflection"> My Reflection</label>
 </div>
-
-        <button id="exportMdBtn" class="secondary">Export Text</button>
-        <button id="exportCsvBtn" class="secondary">Export CSV</button>
-        <button id="clearBtn" class="secondary">Clear Journal</button>
-      </div>
 
       <div id="journalList" class="journal-list"></div>
     </section>
