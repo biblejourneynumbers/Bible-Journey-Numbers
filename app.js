@@ -405,9 +405,7 @@ function exportTextPlain() {
   URL.revokeObjectURL(url);
 }
 
-
-
-/* ---------- Copy for Social (all entries, plain text) ---------- */
+/* ---------- Copy for Social (category-aware, robust fallback) ---------- */
 function exportSocial() {
   const rows = getJournal();
   if (!rows.length) {
@@ -415,24 +413,30 @@ function exportSocial() {
     return;
   }
 
-  // Collect selected fields
-  const selected = [...document.querySelectorAll('input[name="copyField"]:checked')]
-                   .map(cb => cb.value);
+  // Gather selected fields
+  const cbs = [...document.querySelectorAll('input[name="copyField"]')];
+  let selected = cbs.filter(cb => cb.checked).map(cb => String(cb.value || '').toLowerCase());
 
-  const out = [];
-  for (const r of rows) {
+  // Normalize synonyms & fallback to ALL if missing/empty
+  const normalize = v => ({ alignment: 'align', align: 'align', verse: 'verse', themes: 'themes', prayer: 'prayer' }[v] || v);
+  selected = selected.map(normalize);
+  if (!selected.length) selected = ['verse', 'themes', 'align', 'prayer'];
+
+  const include = key => selected.includes(key);
+
+  const out = rows.map(r => {
     const local = new Date(r.date).toLocaleString();
     const header = `${r.reference || '—'} — #${r.number}${r.translation ? ' (' + r.translation + ')' : ''}`;
     const lines = [header, `Date: ${local}`];
 
-    if (selected.includes('verse'))   lines.push(`Verse: ${r.verse || ''}`);
-    if (selected.includes('themes'))  lines.push(`Themes: ${r.csvThemes || ''}`);
-    if (selected.includes('align'))   lines.push(`Alignment: ${r.csvAlign || ''}`);
-    if (selected.includes('prayer'))  lines.push(`Prayer: ${r.csvPrayer || ''}`);
+    if (include('verse'))  lines.push(`Verse: ${r.verse || ''}`);
+    if (include('themes')) lines.push(`Themes: ${r.csvThemes || ''}`);
+    if (include('align'))  lines.push(`Alignment: ${r.csvAlign || ''}`);
+    if (include('prayer')) lines.push(`Prayer: ${r.csvPrayer || ''}`);
 
     lines.push(''); // blank line between entries
-    out.push(lines.join('\n'));
-  }
+    return lines.join('\n');
+  });
 
   const text = out.join('\n');
   navigator.clipboard?.writeText(text)
@@ -448,7 +452,6 @@ function exportSocial() {
       setStatus('Saved selected fields as a text file (clipboard was blocked).');
     });
 }
-
 
 /* ---------- Clear all entries (robust + legacy wipe) ---------- */
 function clearJournal() {
@@ -469,8 +472,7 @@ function clearJournal() {
 resolveBtn?.addEventListener('click', resolveNumber);
 saveBtn?.addEventListener('click', saveEntry);
 exportCsvBtn?.addEventListener('click', exportCSV);
-// exportMdBtn?.addEventListener('click', exportMarkdown);
-exportMdBtn?.addEventListener('click', exportTextPlain);
+exportMdBtn?.addEventListener('click', exportTextPlain); // Export Text (.txt)
 exportSocialBtn?.addEventListener('click', exportSocial);
 clearBtn?.addEventListener('click', clearJournal);
 
