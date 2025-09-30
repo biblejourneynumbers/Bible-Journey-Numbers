@@ -37,67 +37,72 @@
     <strong>Tips:</strong>
     <ul style="margin:.25rem 0 0 1.1rem;">
       <li>If your number has leading zeros, just type the digits (e.g., <code>05</code> → <code>5</code>).</li>
-      <li><strong>Export Markdown</strong> for clean sharing/reading in apps like UpNote/Notion.</li>
+      <li><strong>Export Text</strong> for easy sharing/reading anywhere.</li>
       <li>Entries include the translation used when you saved them.</li>
-      <li>1200 represents the entire Bible. If you’re looking for a number like 1205, just enter 5 — the “12” is understood as either after midnight or after noon.</li>
+      <li><code>1200</code> represents the entire Bible. For times like <code>1205</code>, just enter <code>5</code> — the “12” is understood as either after midnight or after noon.</li>
     </ul>
   </div>
 </section>
 
-    <!-- Lookup Card -->
-    <section class="card">
-      <label for="numInput">Enter number</label>
+<!-- Lookup Card -->
+<section class="card">
+  <label for="numInput">Enter number</label>
 
-      <div class="input-row">
-        <input id="numInput" type="text" inputmode="numeric" placeholder="e.g., 507">
-        <button id="resolveBtn">Resolve</button>
-      </div>
+  <div class="input-row">
+    <input id="numInput" type="text" inputmode="numeric" placeholder="e.g., 507">
+    <button id="resolveBtn">Resolve</button>
+  </div>
 
-      <div class="input-row" style="margin-top:.5rem;">
-        <label for="translation" class="inline-label" style="margin-right:.5rem;">Translation:</label>
-        <select id="translation">
-          <option value="kjv" selected>KJV</option>
-          <option value="asv">ASV</option>
-          <option value="web">WEB</option>
-        </select>
-      </div>
+  <div class="muted" style="font-size:12px; margin-top:4px;">
+    Tip: Use just the digits (e.g., 507). For times after noon or midnight (e.g., 1205), enter only the last part (<code>5</code>).
+  </div>
 
-      <p id="status" class="status"></p>
+  <div class="input-row" style="margin-top:.5rem;">
+    <label for="translation" class="inline-label" style="margin-right:.5rem;">Translation:</label>
+    <select id="translation">
+      <option value="kjv" selected>KJV</option>
+      <option value="asv">ASV</option>
+      <option value="web">WEB</option>
+    </select>
+  </div>
 
-      <div id="result" class="result hidden">
-        <h2 id="refOut"></h2>
+  <p id="status" class="status"></p>
 
-        <div class="verse">
-          <strong>Verse (text):</strong>
-          <p id="verseText"></p>
-        </div>
+  <div id="result" class="result hidden">
+    <h2 id="refOut"></h2>
 
-        <div class="meaning">
-          <strong>Themes:</strong>
-          <p id="themesOut"></p>
-        </div>
+    <div class="verse">
+      <strong>Verse (text):</strong>
+      <p id="verseText"></p>
+    </div>
 
-        <div class="meaning">
-          <strong>Quick Reflection:</strong>
-          <p id="quickOut"></p>
-        </div>
+    <div class="meaning">
+      <strong>Themes:</strong>
+      <p id="themesOut"></p>
+    </div>
 
-        <div class="meaning">
-          <strong>Extended Reflection:</strong>
-          <p id="extendedOut"></p>
-        </div>
+    <div class="meaning">
+      <strong>Quick Reflection:</strong>
+      <p id="quickOut"></p>
+    </div>
 
-        <div class="meaning">
-          <strong>Alignment:</strong>
-          <p id="alignOut"></p>
-        </div>
+    <div class="meaning">
+      <strong>Extended Reflection:</strong>
+      <p id="extendedOut"></p>
+    </div>
 
-        <div class="meaning">
-          <strong>Prayer:</strong>
-          <p id="prayerOut"></p>
-        </div>
-      </div>
-    </section>
+    <div class="meaning">
+      <strong>Alignment:</strong>
+      <p id="alignOut"></p>
+    </div>
+
+    <div class="meaning">
+      <strong>Prayer:</strong>
+      <p id="prayerOut"></p>
+    </div>
+  </div>
+</section>
+
 
     <!-- My Journal -->
     <section class="card" style="margin-top:1rem;">
